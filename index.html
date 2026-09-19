@@ -27,6 +27,12 @@
   .me-dot { width: 18px; height: 18px; border-radius: 300px; background: var(--pine); border: 3px solid var(--cream); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
   .pin { width: 16px; height: 16px; border-radius: 300px; background: var(--cream); border: 2.5px solid var(--pine); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
   .pin.mark { background: var(--tan); }
+  .raw-dot { width: 8px; height: 8px; border-radius: 300px; background: rgba(255,253,208,.85); border: 1px solid rgba(24,64,39,.6); }
+  .elev { flex: none; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 16px 6px; }
+  .elev div { background: rgba(243,239,199,.08); border: 1px solid rgba(243,239,199,.14); border-radius: 14px; padding: 8px 10px; text-align: center; }
+  .elev .k { font-family: var(--num); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(243,239,199,.7); }
+  .elev .v { font-family: var(--num); font-size: 22px; line-height: 24px; }
+  .elev .s { font-size: 11px; color: rgba(243,239,199,.65); }
   .hint { position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-family: var(--hand); font-size: 15px; color: var(--cream); text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; z-index: 500; }
   .follow { position: absolute; right: 14px; top: 42px; z-index: 500; }
   .follow button { flex: none; padding: 8px 14px; font-size: 14px; background: rgba(24,64,39,.78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -54,7 +60,7 @@
 <div class="app">
   <div class="gate" id="gate">
     <div class="t">Yardage test</div>
-    <p>Your dot, live, on the satellite photo. Tap anything — a tree, a mailbox, the far goal line — for the yards to it. Mark a spot, walk away, and check the number against something you know.</p>
+    <p>Your dot, live, on the satellite photo. Tap anything for the yards to it. Mark a spot, walk away, and check the number against something you know. The small pale dot is the raw GPS fix; the big one is what the app would show.</p>
     <button class="primary" id="start">Start · allow location</button>
     <div class="err" id="err"></div>
   </div>
@@ -71,6 +77,11 @@
       <div class="fb" id="fb"><b>—</b> from mark<br><b>—</b> bearing</div>
     </div>
   </div>
+  <div class="elev">
+    <div><div class="k">Phone alt</div><div class="v" id="palt">—</div><div class="s" id="palts">GPS/baro</div></div>
+    <div><div class="k">USGS ground</div><div class="v" id="ualt">—</div><div class="s" id="ualts">lidar map</div></div>
+    <div><div class="k">Mark → here</div><div class="v" id="dalt">—</div><div class="s" id="dalts">USGS rise</div></div>
+  </div>
   <div class="bar">
     <button id="markbtn" disabled>Mark here</button>
     <button id="clearbtn" disabled>Clear</button>
@@ -84,6 +95,19 @@
   const $ = id => document.getElementById(id);
   const M_PER_YD = 0.9144;
   let unit = 'yd', me = null, target = null, mark = null, follow = true, started = false;
+  let raw = null, rawMarker = null, recent = [];   // last raw fixes, for the jitter number
+  let usgsHere = null, usgsMark = null, lastUsgsAt = 0, lastUsgsPos = null;
+  const FT = 3.28084;
+  // USGS ground elevation (feet) at a point — the same lookup the app would pre-compute per hole.
+  async function usgs(p) { try { const r = await (await fetch(`https://epqs.nationalmap.gov/v1/json?x=${p.lng}&y=${p.lat}&units=Feet&wkid=4326&includeDate=false`)).json(); const v = Number(r.value); return isFinite(v) ? v : null; } catch (_) { return null; } }
+  function elevPanel() {
+    if (raw && raw.alt !== null && isFinite(raw.alt)) { $('palt').textContent = Math.round(raw.alt * FT) + ' ft'; $('palts').textContent = raw.altAcc ? '±' + Math.round(raw.altAcc * FT) + ' ft' : 'no accuracy given'; }
+    else { $('palt').textContent = '—'; $('palts').textContent = 'phone gave none'; }
+    $('ualt').textContent = usgsHere === null ? '—' : Math.round(usgsHere) + ' ft';
+    $('ualts').textContent = usgsHere === null ? 'looking up…' : (raw && raw.alt !== null ? 'phone is ' + Math.round(raw.alt * FT - usgsHere) + ' ft off' : 'lidar map');
+    if (mark && usgsMark !== null && usgsHere !== null) { const d = usgsHere - usgsMark; $('dalt').textContent = (d > 0 ? '+' : '') + Math.round(d) + ' ft'; const p = L.latLng(me.lat, me.lng); const yd = p.distanceTo(mark) / M_PER_YD; $('dalts').textContent = yd > 5 ? 'plays ' + Math.round(yd + d / 3) + ' of ' + Math.round(yd) : 'USGS rise'; }
+    else { $('dalt').textContent = '—'; $('dalts').textContent = mark ? 'looking up…' : 'set a mark'; }
+  }
   const fmt = m => unit === 'yd' ? Math.round(m / M_PER_YD) : Math.round(m);
   const compass = b => ['N','NE','E','SE','S','SW','W','NW'][Math.round(b / 45) % 8];
   const bearing = (a, b) => { const e = (b.lng - a.lng) * Math.cos(a.lat * Math.PI / 180), n = b.lat - a.lat; return (Math.atan2(e, n) * 180 / Math.PI + 360) % 360; };
@@ -92,8 +116,8 @@
   // Satellite: Esri World Imagery (sharp, to street level). Public-domain USGS as the fallback.
   const esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics' });
   esri.addTo(map);
-  esri.on('tileerror', () => { if (!map.hasLayer(usgs)) { map.removeLayer(esri); usgs.addTo(map); } });
-  const usgs = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Imagery: USGS (public domain)' });
+  esri.on('tileerror', () => { if (!map.hasLayer(usgsTiles)) { map.removeLayer(esri); usgsTiles.addTo(map); } });
+  const usgsTiles = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Imagery: USGS (public domain)' });
 
   const meIcon = L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
   const pinIcon = L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
@@ -114,17 +138,35 @@
     else { $('big').textContent = '—'; $('biglbl').textContent = 'tap the map'; }
     const b = target ? bearing(p, target) : (mark ? bearing(p, mark) : null);
     $('fb').innerHTML = `<b>${mark ? fmt(p.distanceTo(mark)) : '—'}</b> from mark<br><b>${b === null ? '—' : Math.round(b) + '° ' + compass(b)}</b> bearing`;
-    const chip = $('acc'); chip.textContent = `±${fmt(me.acc)} ${unit}`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
+    let jit = '';
+    if (recent.length >= 5) { const cx = recent.reduce((a, r) => a + r.lat, 0) / recent.length, cy = recent.reduce((a, r) => a + r.lng, 0) / recent.length; const sp = Math.sqrt(recent.reduce((a, r) => a + L.latLng(cx, cy).distanceTo([r.lat, r.lng]) ** 2, 0) / recent.length); jit = ` · jitter ${fmt(sp)}`; }
+    const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} ${unit}${jit}`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
     if (follow) map.setView(p, Math.max(map.getZoom(), 18), { animate: started });
   }
   function onFix(pos) {
     const c = pos.coords;
-    me = { lat: c.latitude, lng: c.longitude, acc: c.accuracy || 99, t: pos.timestamp };
+    raw = { lat: c.latitude, lng: c.longitude, acc: c.accuracy || 99, t: pos.timestamp, speed: c.speed, alt: (c.altitude === null || c.altitude === undefined) ? null : c.altitude, altAcc: c.altitudeAccuracy };
+    recent.push(raw); if (recent.length > 20) recent.shift();
+    // Stationary lock: a new fix inside the current dot's error circle, with no real speed,
+    // is noise — ease toward it a little instead of jumping. A fix outside it, or with
+    // speed, is a real move: take it. Then blend by accuracy (better fixes count more).
+    if (!me) me = { lat: raw.lat, lng: raw.lng, acc: raw.acc, t: raw.t };
+    else {
+      const d = L.latLng(me.lat, me.lng).distanceTo([raw.lat, raw.lng]);
+      const moving = (raw.speed !== null && raw.speed !== undefined && raw.speed > 0.6) || d > Math.max(raw.acc, me.acc, 4) * 1.2;
+      const w = moving ? 0.7 : Math.min(0.25, 0.12 * (me.acc / Math.max(raw.acc, 1)));
+      me = { lat: me.lat + (raw.lat - me.lat) * w, lng: me.lng + (raw.lng - me.lng) * w, acc: moving ? raw.acc : Math.min(me.acc * 0.97 + raw.acc * 0.03, raw.acc * 1.5), t: raw.t };
+    }
+    if (!rawMarker) rawMarker = L.marker([raw.lat, raw.lng], { icon: L.divIcon({ className: '', html: '<div class="raw-dot"></div>', iconSize: [8, 8], iconAnchor: [4, 4] }), interactive: false }).addTo(map); else rawMarker.setLatLng([raw.lat, raw.lng]);
+    // USGS ground under the (smoothed) dot, at most every 4 s and only after a 3 m move
+    const now = Date.now(); const mp = L.latLng(me.lat, me.lng);
+    if (now - lastUsgsAt > 4000 && (!lastUsgsPos || mp.distanceTo(lastUsgsPos) > 3)) { lastUsgsAt = now; lastUsgsPos = mp; usgs(mp).then(v => { usgsHere = v; elevPanel(); }); }
+    elevPanel();
     if (!started) { map.setView([me.lat, me.lng], 18); started = true; }
     $('markbtn').disabled = false; $('clearbtn').disabled = !(mark || target);
     $('hint').textContent = target ? '' : (mark ? 'walk — the number is yards back to your mark' : 'tap anything for yards to it');
     const row = document.createElement('div');
-    row.innerHTML = `<span>${new Date(me.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>${me.lat.toFixed(6)}, ${me.lng.toFixed(6)}</span><span>±${fmt(me.acc)} ${unit}</span>`;
+    row.innerHTML = `<span>${new Date(raw.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>${raw.lat.toFixed(6)}, ${raw.lng.toFixed(6)}</span><span>±${fmt(raw.acc)} ${unit}${raw.alt !== null ? ' · ' + Math.round(raw.alt * FT) + ' ft' : ''}</span>`;
     const log = $('log'); log.prepend(row); while (log.children.length > 40) log.lastChild.remove();
     redraw();
   }
@@ -140,10 +182,10 @@
   map.on('click', e => { if (!me) return; target = e.latlng; $('clearbtn').disabled = false; redraw(); });
   map.on('dragstart', () => { follow = false; $('followbtn').classList.remove('on'); });
   $('followbtn').addEventListener('click', () => { follow = !follow; $('followbtn').classList.toggle('on', follow); redraw(); });
-  $('markbtn').addEventListener('click', () => { if (!me) return; mark = L.latLng(me.lat, me.lng); if (targetMarker) { map.removeLayer(targetMarker); targetMarker = null; } if (ray) { map.removeLayer(ray); ray = null; } target = null; $('clearbtn').disabled = false; try { localStorage.setItem('gbmark', JSON.stringify(mark)); } catch (_) {} redraw(); });
-  $('clearbtn').addEventListener('click', () => { for (const l of [targetMarker, markMarker, ray, markRay]) if (l) map.removeLayer(l); targetMarker = markMarker = ray = markRay = null; mark = null; target = null; try { localStorage.removeItem('gbmark'); } catch (_) {} $('clearbtn').disabled = true; redraw(); });
+  $('markbtn').addEventListener('click', () => { if (!me) return; mark = L.latLng(me.lat, me.lng); usgsMark = null; usgs(mark).then(v => { usgsMark = v; elevPanel(); }); if (targetMarker) { map.removeLayer(targetMarker); targetMarker = null; } if (ray) { map.removeLayer(ray); ray = null; } target = null; $('clearbtn').disabled = false; try { localStorage.setItem('gbmark', JSON.stringify(mark)); } catch (_) {} redraw(); });
+  $('clearbtn').addEventListener('click', () => { for (const l of [targetMarker, markMarker, ray, markRay]) if (l) map.removeLayer(l); targetMarker = markMarker = ray = markRay = null; mark = null; target = null; usgsMark = null; elevPanel(); try { localStorage.removeItem('gbmark'); } catch (_) {} $('clearbtn').disabled = true; redraw(); });
   $('unitbtn').addEventListener('click', () => { unit = unit === 'yd' ? 'm' : 'yd'; $('unitbtn').textContent = unit === 'yd' ? 'Yards' : 'Metres'; redraw(); });
-  try { const m = JSON.parse(localStorage.getItem('gbmark') || 'null'); if (m && isFinite(m.lat)) mark = L.latLng(m.lat, m.lng); } catch (_) {}
+  try { const m = JSON.parse(localStorage.getItem('gbmark') || 'null'); if (m && isFinite(m.lat)) { mark = L.latLng(m.lat, m.lng); usgs(mark).then(v => { usgsMark = v; }); } } catch (_) {}
 })();
 </script>
 </body>
