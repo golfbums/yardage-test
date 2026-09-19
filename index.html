@@ -64,6 +64,7 @@
 </head>
 <body>
 <div class="app">
+  <div hidden><span id="palt"></span><span id="palts"></span><span id="ualt"></span><span id="ualts"></span><span id="dalt"></span><span id="dalts"></span><div id="log"></div></div>
   <div class="gate" id="gate">
     <div class="t">Yardage test</div>
     <p>Tap the map to plant a green. The hole turns so the green is at the top and you're at the bottom, with the yards on the line — the way a rangefinder app draws it. Mark a tee where you start and it shows that leg too.</p>
@@ -83,17 +84,11 @@
       <div class="fb" id="fb"><b>—</b> front<br><b>—</b> back</div>
     </div>
   </div>
-  <div class="elev">
-    <div><div class="k">Phone alt</div><div class="v" id="palt">—</div><div class="s" id="palts">GPS/baro</div></div>
-    <div><div class="k">USGS here</div><div class="v" id="ualt">—</div><div class="s" id="ualts">lidar map</div></div>
-    <div><div class="k">Green rise</div><div class="v" id="dalt">—</div><div class="s" id="dalts">plant a green</div></div>
-  </div>
   <div class="bar">
     <button id="markbtn" disabled>Mark tee</button>
     <button id="clearbtn" disabled>Clear</button>
     <button id="unitbtn">Yards</button>
   </div>
-  <div class="log" id="log"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
@@ -164,7 +159,7 @@
       if (!L_.ray) L_.ray = L.polyline([p, green], { color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([p, green]);
       const d = p.distanceTo(green);
       label('glab', p, green, fmt(d), 'to the middle');
-      $('big').textContent = fmt(d); $('biglbl').textContent = `${unit} to the green`;
+      $('big').textContent = fmt(d); const rise = (usgsGreen !== null && usgsHere !== null) ? usgsGreen - usgsHere : null; $('biglbl').textContent = rise === null ? `${unit} to the green` : `${unit} to the green · plays ${Math.round(d / (unit === 'yd' ? M_PER_YD : 1) + (unit === 'yd' ? rise / 3 : rise / 3 * M_PER_YD))}${Math.abs(rise) >= 1 ? (rise > 0 ? ' · ' + Math.round(rise) + ' ft up' : ' · ' + Math.round(-rise) + ' ft down') : ''}`;
       $('fb').innerHTML = `<b>${fmt(Math.max(0, d - GREEN_R))}</b> front<br><b>${fmt(d + GREEN_R)}</b> back`;
     } else { $('big').textContent = '—'; $('biglbl').textContent = 'tap to plant a green'; $('fb').innerHTML = '<b>—</b> front<br><b>—</b> back'; }
     if (tee) {
@@ -220,7 +215,7 @@
     $('err').textContent = 'asking…';
     navigator.geolocation.watchPosition(p => { $('gate').hidden = true; setTimeout(() => map.invalidateSize(), 50); onFix(p); }, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
   });
-  map.on('click', e => { if (!me) return; green = e.latlng; framed = false; usgsGreen = null; usgs(green).then(v => { usgsGreen = v; elevPanel(); }); $('clearbtn').disabled = false; elevPanel(); redraw(); });
+  map.on('click', e => { if (!me) return; green = e.latlng; framed = false; usgsGreen = null; usgs(green).then(v => { usgsGreen = v; elevPanel(); redraw(); }); $('clearbtn').disabled = false; elevPanel(); redraw(); });
   const setView = hv => { holeView = hv; framed = false; $('holebtn').classList.toggle('on', hv); $('northbtn').classList.toggle('on', !hv); redraw(); };
   $('holebtn').addEventListener('click', () => setView(true));
   $('northbtn').addEventListener('click', () => setView(false));
