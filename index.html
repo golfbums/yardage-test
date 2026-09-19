@@ -124,19 +124,34 @@
   // a yardage pill at the midpoint of a leg; the pill centres itself with CSS
   const label = (key, a, b, text, sub) => { const mid = L.latLng((a.lat + b.lat) / 2, (a.lng + b.lng) / 2); const ic = L.divIcon({ className: '', html: `<div class="ylab">${text}<small>${sub}</small></div>`, iconSize: [0, 0], iconAnchor: [0, 0] }); if (L_[key]) { L_[key].setLatLng(mid); L_[key].setIcon(ic); } else L_[key] = L.marker(mid, { icon: ic, interactive: false }).addTo(map); };
 
+  // Hole view frames the hole ONCE — green pinned near the top, the tee (or where you
+  // planted from) near the bottom — and then holds still so only your dot moves. It
+  // re-frames only if you walk off the screen.
+  let framed = false;
+  function setFrame() {
+    const p = L.latLng(me.lat, me.lng); const ref = tee || p;
+    const b = bearing(ref, green);
+    map.setBearing(-b);
+    const d = Math.max(ref.distanceTo(green), 60);
+    const h = map.getSize().y, w = map.getSize().x;
+    const mpp = d / (h * 0.62);
+    const z = Math.min(19, Math.max(14, Math.log2(156543.03 * Math.cos(p.lat * Math.PI / 180) / mpp)));
+    const mppZ = 156543.03 * Math.cos(p.lat * Math.PI / 180) / Math.pow(2, z);
+    // centre = green pushed back down the line by (50% − 16%) of the screen height
+    const back = (0.5 - 0.16) * h * mppZ;
+    const rad = (b + 180) * Math.PI / 180;
+    const c = L.latLng(green.lat + Math.cos(rad) * back / 111320, green.lng + Math.sin(rad) * back / (111320 * Math.cos(green.lat * Math.PI / 180)));
+    map.setView(c, z, { animate: started });
+    framed = true;
+  }
   function frame() {
     if (!me) return;
     const p = L.latLng(me.lat, me.lng);
     if (holeView && green) {
-      // Hole view: turn the map so the green is straight up, and fit you and the green
-      // in the middle of the screen.
-      map.setBearing(-bearing(p, green));
-      const d = p.distanceTo(green);
-      const mid = L.latLng((p.lat + green.lat) / 2, (p.lng + green.lng) / 2);
-      const h = map.getSize().y; const mpp = Math.max(d, 60) / (h * 0.58);
-      const z = Math.min(19, Math.max(15, Math.log2(156543.03 * Math.cos(p.lat * Math.PI / 180) / mpp)));
-      map.setView(mid, z, { animate: started });
-    } else { map.setBearing(0); map.setView(p, Math.max(map.getZoom(), 18), { animate: started }); }
+      if (!framed) { setFrame(); return; }
+      const pt = map.latLngToContainerPoint(p), sz = map.getSize();
+      if (pt.x < sz.x * 0.08 || pt.x > sz.x * 0.92 || pt.y < sz.y * 0.06 || pt.y > sz.y * 0.94) setFrame();
+    } else { framed = false; map.setBearing(0); map.setView(p, Math.max(map.getZoom(), 18), { animate: started }); }
   }
   function redraw() {
     if (!me) return;
@@ -205,12 +220,12 @@
     $('err').textContent = 'asking…';
     navigator.geolocation.watchPosition(p => { $('gate').hidden = true; setTimeout(() => map.invalidateSize(), 50); onFix(p); }, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
   });
-  map.on('click', e => { if (!me) return; green = e.latlng; usgsGreen = null; usgs(green).then(v => { usgsGreen = v; elevPanel(); }); $('clearbtn').disabled = false; elevPanel(); redraw(); });
-  const setView = hv => { holeView = hv; $('holebtn').classList.toggle('on', hv); $('northbtn').classList.toggle('on', !hv); redraw(); };
+  map.on('click', e => { if (!me) return; green = e.latlng; framed = false; usgsGreen = null; usgs(green).then(v => { usgsGreen = v; elevPanel(); }); $('clearbtn').disabled = false; elevPanel(); redraw(); });
+  const setView = hv => { holeView = hv; framed = false; $('holebtn').classList.toggle('on', hv); $('northbtn').classList.toggle('on', !hv); redraw(); };
   $('holebtn').addEventListener('click', () => setView(true));
   $('northbtn').addEventListener('click', () => setView(false));
   map.on('dragstart', () => { if (holeView) setView(false); });
-  $('markbtn').addEventListener('click', () => { if (!me) return; tee = L.latLng(me.lat, me.lng); $('clearbtn').disabled = false; try { localStorage.setItem('gbtee', JSON.stringify(tee)); } catch (_) {} redraw(); });
+  $('markbtn').addEventListener('click', () => { if (!me) return; tee = L.latLng(me.lat, me.lng); framed = false; $('clearbtn').disabled = false; try { localStorage.setItem('gbtee', JSON.stringify(tee)); } catch (_) {} redraw(); });
   $('clearbtn').addEventListener('click', () => { for (const k of ['gcirc', 'flag', 'ray', 'glab', 'tee', 'tray', 'tlab']) drop(k); green = null; tee = null; usgsGreen = null; try { localStorage.removeItem('gbtee'); } catch (_) {} $('clearbtn').disabled = true; elevPanel(); redraw(); });
   $('unitbtn').addEventListener('click', () => { unit = unit === 'yd' ? 'm' : 'yd'; $('unitbtn').textContent = unit === 'yd' ? 'Yards' : 'Metres'; elevPanel(); redraw(); });
   try { const m = JSON.parse(localStorage.getItem('gbtee') || 'null'); if (m && isFinite(m.lat)) tee = L.latLng(m.lat, m.lng); } catch (_) {}
