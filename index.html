@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Yardage Test</title>
+</head>
+<body>
+<style>body{margin:0;font-family:system-ui,sans-serif}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700&family=Architects+Daughter&display=swap">
+<style>
+  :root { --cream:#FFFDD0; --paper:#F7F1DC; --pine:#184027; --soft:#4A4A44; --tan:#E3B278; --card:rgb(248,200,158); --putt:#A6D48A; --red:#C0392B;
+    --body:'Nunito Sans','Segoe UI',system-ui,sans-serif; --num:'Bebas Neue','Arial Narrow',Impact,sans-serif; --hand:'Architects Daughter','Segoe Print',cursive; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--pine); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.4; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  .app { position: relative; height: 100%; display: flex; flex-direction: column; }
+  .hdr { flex: none; padding: 12px 16px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .hdr .t { font-family: var(--num); font-size: 22px; letter-spacing: .5px; text-transform: uppercase; }
+  .chip { font-family: var(--num); font-size: 14px; letter-spacing: .6px; padding: 5px 12px; border-radius: 300px; background: rgba(243,239,199,.14); border: 1px solid rgba(243,239,199,.22); white-space: nowrap; }
+  .chip.good { background: var(--putt); color: var(--pine); border-color: transparent; }
+  .chip.ok { background: var(--tan); color: var(--pine); border-color: transparent; }
+  .chip.bad { background: var(--red); color: var(--cream); border-color: transparent; }
+  .map { position: relative; flex: 1 1 0; min-height: 0; background: var(--paper); touch-action: none; }
+  .map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .ring { fill: none; stroke: #34342F; stroke-width: 1; stroke-dasharray: 2 5; opacity: .45; }
+  .ringlbl { fill: #34342F; font-family: var(--hand); font-size: 13px; opacity: .8; }
+  .north { fill: #34342F; font-family: var(--hand); font-size: 14px; opacity: .8; }
+  .ray { stroke: var(--pine); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+  .me { fill: var(--pine); stroke: var(--paper); stroke-width: 3; }
+  .acc { fill: rgba(24,64,39,.08); stroke: rgba(24,64,39,.35); stroke-width: 1; }
+  .target { fill: var(--paper); stroke: var(--pine); stroke-width: 2.2; }
+  .mark { fill: var(--tan); stroke: var(--pine); stroke-width: 2; }
+  .marklbl { fill: var(--pine); font-family: var(--hand); font-size: 13px; text-anchor: middle; }
+  .trail { fill: rgba(24,64,39,.35); }
+  .hint { position: absolute; top: 12px; left: 0; right: 0; text-align: center; font-family: var(--hand); font-size: 15px; color: #34342F; opacity: .8; pointer-events: none; }
+  .yard { position: absolute; left: 16px; right: 16px; bottom: 16px; border-radius: 22px; padding: 12px 18px; background: rgba(248,200,158,.94); color: var(--pine); border: 1px solid rgba(24,64,39,.14); box-shadow: 0 10px 30px rgba(24,64,39,.35); display: flex; align-items: center; gap: 14px; }
+  .yard .big { font-family: var(--num); font-size: 64px; line-height: 60px; min-width: 96px; }
+  .yard .lbl { font-family: var(--num); font-size: 12px; letter-spacing: 1.1px; text-transform: uppercase; color: #5B3D17; }
+  .yard .fb { margin-left: auto; text-align: right; font-size: 13px; line-height: 18px; }
+  .yard .fb b { font-family: var(--num); font-weight: 400; font-size: 20px; letter-spacing: .3px; }
+  .bar { flex: none; display: flex; gap: 8px; padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+  button { flex: 1 1 0; font: inherit; font-family: var(--num); font-size: 16px; letter-spacing: .8px; text-transform: uppercase; color: var(--cream); background: rgba(243,239,199,.14); border: 1px solid rgba(243,239,199,.22); border-radius: 300px; padding: 13px 0; cursor: pointer; }
+  button.primary { background: linear-gradient(135deg, rgba(240,216,170,.95), rgba(222,184,128,.92)); color: var(--pine); border-color: transparent; }
+  button:disabled { opacity: .4; }
+  button:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+  .log { flex: none; max-height: 112px; overflow-y: auto; padding: 0 16px 8px; font-size: 12px; color: rgba(243,239,199,.75); font-variant-numeric: tabular-nums; }
+  .log div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px solid rgba(243,239,199,.1); }
+  .gate { position: absolute; inset: 0; background: var(--pine); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 14px; z-index: 5; }
+  .gate p { max-width: 34ch; margin: 0; color: rgba(243,239,199,.85); }
+  .gate .t { font-family: var(--num); font-size: 34px; letter-spacing: .5px; }
+  .gate button { flex: none; padding: 14px 34px; }
+  .gate .err { color: var(--tan); font-size: 14px; max-width: 36ch; }
+  .gate[hidden] { display: none; }
+</style>
+<div class="app">
+  <div class="gate" id="gate">
+    <div class="t">Yardage test</div>
+    <p>Your dot, live, on a grid drawn to scale. Tap anywhere for the yards to it. Mark a spot, walk away, and check the number against something you know — a football field is 100 yards goal line to goal line.</p>
+    <button class="primary" id="start">Start · allow location</button>
+    <div class="err" id="err"></div>
+  </div>
+  <div class="hdr">
+    <div class="t">Yardage test</div>
+    <span class="chip" id="acc">waiting for GPS</span>
+  </div>
+  <div class="map" id="map">
+    <svg id="svg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-label="Your position on a yardage grid"></svg>
+    <div class="hint" id="hint">tap anywhere for yards to it</div>
+    <div class="yard">
+      <div><div class="big" id="big">—</div><div class="lbl" id="biglbl">tap the map</div></div>
+      <div class="fb" id="fb"><b>—</b> from mark<br><b>—</b> bearing</div>
+    </div>
+  </div>
+  <div class="bar">
+    <button id="markbtn" disabled>Mark here</button>
+    <button id="clearbtn" disabled>Clear</button>
+    <button id="unitbtn">Yards</button>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const svg = $('svg'), mapEl = $('map');
+  const M_PER_YD = 0.9144;
+  let unit = 'yd';
+  let me = null;          // {lat, lon, acc(m), t, heading, speed}
+  let target = null;      // {lat, lon} from a tap
+  let mark = null;        // {lat, lon} saved position
+  let trail = [];         // recent fixes
+  let radiusYd = 230;     // half the short side of the grid, in yards
+  let W = 400, H = 600;
+
+  // local flat frame around "me": east/north metres
+  const en = (p, o) => ({ e: (p.lon - o.lon) * 111320 * Math.cos(o.lat * Math.PI / 180), n: (p.lat - o.lat) * 111320 });
+  const dist = (a, b) => { const d = en(b, a); return Math.hypot(d.e, d.n); }; // metres
+  const bearing = (a, b) => { const d = en(b, a); return (Math.atan2(d.e, d.n) * 180 / Math.PI + 360) % 360; };
+  const fmt = m => unit === 'yd' ? Math.round(m / M_PER_YD) : Math.round(m);
+  const u = () => unit;
+  const compass = b => ['N','NE','E','SE','S','SW','W','NW'][Math.round(b / 45) % 8];
+
+  function size() { const r = mapEl.getBoundingClientRect(); W = Math.max(200, r.width); H = Math.max(200, r.height); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); }
+  const pxPerM = () => (Math.min(W, H) / 2) / (radiusYd * M_PER_YD);
+  const toXY = p => { const d = en(p, me); const k = pxPerM(); return { x: W / 2 + d.e * k, y: H / 2 - d.n * k }; };
+  const fromXY = (x, y) => { const k = pxPerM(); const e = (x - W / 2) / k, n = (H / 2 - y) / k; return { lat: me.lat + n / 111320, lon: me.lon + e / (111320 * Math.cos(me.lat * Math.PI / 180)) }; };
+
+  function draw() {
+    size();
+    if (!me) { svg.innerHTML = ''; return; }
+    const k = pxPerM(); const cx = W / 2, cy = H / 2;
+    const rings = unit === 'yd' ? [50, 100, 150, 200] : [50, 100, 150, 200];
+    const rm = unit === 'yd' ? M_PER_YD : 1;
+    let s = '';
+    for (const r of rings) { const R = r * rm * k; s += `<circle class="ring" cx="${cx}" cy="${cy}" r="${R.toFixed(1)}"/><text class="ringlbl" x="${(cx + 6).toFixed(1)}" y="${(cy - R - 4).toFixed(1)}">${r}</text>`; }
+    s += `<text class="north" x="${cx}" y="22" text-anchor="middle">N ↑</text>`;
+    // accuracy circle
+    s += `<circle class="acc" cx="${cx}" cy="${cy}" r="${Math.max(6, me.acc * k).toFixed(1)}"/>`;
+    // trail
+    for (const p of trail.slice(-30)) { const q = toXY(p); s += `<circle class="trail" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="2"/>`; }
+    if (mark) { const q = toXY(mark); s += `<circle class="mark" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="7"/><text class="marklbl" x="${q.x.toFixed(1)}" y="${(q.y - 12).toFixed(1)}">mark · ${fmt(dist(me, mark))} ${u()}</text>`; }
+    if (target) { const q = toXY(target); s += `<line class="ray" x1="${cx}" y1="${cy}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}"/><circle class="target" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="7"/>`; }
+    s += `<circle class="me" cx="${cx}" cy="${cy}" r="9"/>`;
+    svg.innerHTML = s;
+    // numbers
+    if (target) { $('big').textContent = fmt(dist(me, target)); $('biglbl').textContent = `${u()} to the pin you tapped`; }
+    else if (mark) { $('big').textContent = fmt(dist(me, mark)); $('biglbl').textContent = `${u()} from your mark`; }
+    else { $('big').textContent = '—'; $('biglbl').textContent = 'tap the map'; }
+    const b = target ? bearing(me, target) : (mark ? bearing(me, mark) : null);
+    $('fb').innerHTML = `<b>${mark ? fmt(dist(me, mark)) : '—'}</b> from mark<br><b>${b === null ? '—' : Math.round(b) + '° ' + compass(b)}</b> bearing`;
+    const accY = fmt(me.acc);
+    const chip = $('acc'); chip.textContent = `±${accY} ${u()}`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
+  }
+
+  function onFix(pos) {
+    const c = pos.coords;
+    me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy || 99, t: pos.timestamp, heading: c.heading, speed: c.speed };
+    trail.push({ lat: me.lat, lon: me.lon }); if (trail.length > 60) trail.shift();
+    $('markbtn').disabled = false; $('clearbtn').disabled = !(mark || target);
+    $('hint').textContent = target ? '' : (mark ? 'walk — the number is yards back to your mark' : 'tap anywhere for yards to it');
+    const row = document.createElement('div');
+    row.innerHTML = `<span>${new Date(me.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>${me.lat.toFixed(6)}, ${me.lon.toFixed(6)}</span><span>±${fmt(me.acc)} ${u()}</span>`;
+    const log = $('log'); log.prepend(row); while (log.children.length > 40) log.lastChild.remove();
+    draw();
+  }
+  function onErr(e) {
+    const msg = e.code === 1 ? 'Location is blocked for this page. iPhone: Settings › Privacy › Location Services › Safari (or the Claude app) → While Using, and Precise on.' : e.code === 2 ? 'No GPS fix yet — step outside or near a window and wait.' : 'GPS timed out — try again outside.';
+    $('err').textContent = msg; $('gate').hidden = false; $('acc').textContent = 'no fix'; $('acc').className = 'chip bad';
+  }
+
+  $('start').addEventListener('click', () => {
+    if (!('geolocation' in navigator)) { $('err').textContent = 'This browser has no location access. Open the link in Safari or Chrome.'; return; }
+    $('err').textContent = 'asking…';
+    navigator.geolocation.watchPosition(p => { $('gate').hidden = true; onFix(p); }, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+  });
+  const tap = (x, y) => { if (!me) return; const r = mapEl.getBoundingClientRect(); target = fromXY(x - r.left, y - r.top); $('clearbtn').disabled = false; draw(); };
+  mapEl.addEventListener('pointerdown', e => { if (e.target.closest('.yard')) return; tap(e.clientX, e.clientY); });
+  $('markbtn').addEventListener('click', () => { if (!me) return; mark = { lat: me.lat, lon: me.lon }; target = null; $('clearbtn').disabled = false; try { localStorage.setItem('gbmark', JSON.stringify(mark)); } catch (_) {} draw(); });
+  $('clearbtn').addEventListener('click', () => { mark = null; target = null; trail = []; try { localStorage.removeItem('gbmark'); } catch (_) {} $('clearbtn').disabled = true; draw(); });
+  $('unitbtn').addEventListener('click', () => { unit = unit === 'yd' ? 'm' : 'yd'; $('unitbtn').textContent = unit === 'yd' ? 'Yards' : 'Metres'; draw(); });
+  try { const m = JSON.parse(localStorage.getItem('gbmark') || 'null'); if (m && isFinite(m.lat)) mark = m; } catch (_) {}
+  window.addEventListener('resize', draw);
+  size();
+})();
+</script>
+</body>
+</html>
