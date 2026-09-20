@@ -75,9 +75,9 @@
   #map.sketch .xmark path { stroke: #2B2B27; filter: none; }
   .stick svg { display: block; } .stick .hole { fill: #2B2B27; } .stick .pole { stroke: #2B2B27; stroke-width: 1.5; } .stick .pennant { fill: #7A2E2E; }
   .cart { display: flex; gap: 3px; } .cart i { width: 11px; height: 11px; border-radius: 300px; background: #E3B278; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
-  .cartlab { position: absolute; transform: translate(14px, -50%); white-space: nowrap; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.9); padding: 4px 9px; border-radius: 300px; }
+  .cartlab { position: absolute; transform: translate(calc(-100% - 12px), -50%); white-space: nowrap; cursor: pointer; pointer-events: auto; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.9); padding: 4px 9px; border-radius: 300px; }
   #map.sketch .cartlab { font-family: var(--hand); font-size: 13px; color: #2B2B27; background: #F7F1DC; border: 1.4px solid #2B2B27; border-radius: 3px; }
-  .grp { position: absolute; top: 12px; right: 12px; z-index: 500; display: flex; align-items: center; gap: 7px; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.85); border: 1px solid rgba(243,239,199,.18); padding: 6px 11px; border-radius: 300px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .grp { position: absolute; top: 12px; right: 12px; z-index: 500; cursor: pointer; display: flex; align-items: center; gap: 7px; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.85); border: 1px solid rgba(243,239,199,.18); padding: 6px 11px; border-radius: 300px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .grp i { width: 8px; height: 8px; border-radius: 300px; background: #E3B278; }
   .seg2 { display: flex; gap: 4px; padding: 0 0 8px; }
   .seg2 button { flex: none; padding: 6px 12px; font-size: 13px; background: rgba(24,64,39,.1); color: var(--pine); border: 0; }
@@ -382,10 +382,10 @@
     const line = h.line; const total = line.reduce((a, p, k, arr) => k ? a + ll(arr[k - 1]).distanceTo(ll(p)) : 0, 0); let want = frac * total, pos = ll(line[line.length - 1]);
     for (let k = 1; k < line.length; k++) { const a = ll(line[k - 1]), b = ll(line[k]); const d = a.distanceTo(b); if (want <= d) { const u = want / d; pos = L.latLng(a.lat + (b.lat - a.lat) * u, a.lng + (b.lng - a.lng) * u); break; } want -= d; }
     const onGreen = frac > 0.93;
-    if (onGreen && me && ll(me).distanceTo(ll(h.green.center)) < 60) { drop('cart'); drop('cartlab'); $('grp').hidden = false; $('grpt').textContent = "JJ's cart · up ahead on " + (H[holeIdx + 1] ? H[holeIdx + 1].hole : h.hole); return; }
+    if (onGreen && me && ll(me).distanceTo(ll(h.green.center)) < 60) { drop('cart'); drop('cartlab'); $('grp').hidden = false; $('grpt').textContent = 'bums · up ahead on ' + (H[holeIdx + 1] ? H[holeIdx + 1].hole : h.hole); return; }
     upsert('cart', pos, { icon: L.divIcon({ className: '', html: '<div class="cart"><i></i><i></i></div>', iconSize: [25, 11], iconAnchor: [12, 5] }) });
-    upsert('cartlab', pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab">JJ\'s cart</div>', iconSize: [0, 0], iconAnchor: [0, 0] }) });
-    $('grp').hidden = false; $('grpt').textContent = "JJ's cart · " + (onGreen ? 'on the green' : 'in the fairway') + ' · hole ' + h.hole;
+    upsert('cartlab', pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab">bums</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
+    $('grp').hidden = false; $('grpt').textContent = 'bums · ' + (onGreen ? 'on the green' : 'in the fairway') + ' · hole ' + h.hole;
   }
   function drawHole() {
     const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers();
@@ -443,6 +443,7 @@
     const block = (cols, tails) => `<div class="row h"><div>Hole</div>${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>` +
       players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div>${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('');
     if (showCard && cardTab === 'outing') { drawOuting(); return; }
+    if (showCard && cardTab === 'group') { renderGroup(); return; }
     if (showCard) {
       const names = `<div class="names"><div class="row h"><div>Hole</div></div>${players.map(pl => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div></div>`).join('')}</div>`;
       const page = (cols, tails) => `<div class="page"><div class="row h">${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>${players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}">${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('')}</div>`;
@@ -455,7 +456,7 @@
       document.querySelectorAll('.card .row').forEach(r => r.style.gridTemplateColumns = `1fr repeat(${cols.length}, 44px) 52px`);
     }
   }
-  const segHtml = () => `<div class="seg2"><button data-t="card" class="${cardTab === 'card' ? 'on' : ''}">Our cart</button><button data-t="outing" class="${cardTab === 'outing' ? 'on' : ''}">Outing · 8</button></div>`;
+  const segHtml = () => `<div class="seg2"><button data-t="card" class="${cardTab === 'card' ? 'on' : ''}">Our cart</button><button data-t="group" class="${cardTab === 'group' ? 'on' : ''}">Cart ahead</button><button data-t="outing" class="${cardTab === 'outing' ? 'on' : ''}">Outing · 8</button></div>`;
   // skins across the outing: lowest unique score takes the hole, ties carry
   function skins() {
     const all = [...players.map((p, k) => ({ n: p.n, sc: scores[k], me: !!p.me })), ...cart2.map((p, k) => ({ n: p.n, sc: cart2Scores[k] }))];
@@ -472,6 +473,16 @@
       `<div class="carry"><span>${detail.length ? 'Last skin: ' + detail[detail.length - 1][1] + ' on ' + detail[detail.length - 1][0] : 'No skins yet'}</span><span>carrying <b>${carry}</b></span></div>`;
   }
   $('card').addEventListener('click', e => { const b = e.target.closest('.seg2 button'); if (!b) return; cardTab = b.dataset.t; drawCard(); });
+  function showGroup() { cardTab = 'group'; $('card').hidden = false; showCard = true; $('cardbtn2').textContent = 'Close'; renderGroup(); }
+  function renderGroup() {
+    const { won } = skins(); const h = H[holeIdx];
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–'; };
+    $('card').innerHTML = segHtml() + `<div class="orow h"><div></div><div>In the cart ahead</div><div class="v">thru</div><div class="v">to par</div><div class="v">skins</div><div class="v"></div></div>` +
+      cart2.map((p, k) => `<div class="orow"><div class="p"></div><div class="n">${p.n}</div><div class="v">${cart2Scores[k].filter(v => v !== null).length}</div><div class="v">${tot(cart2Scores[k])}</div><div class="v sk">${won[p.n] || ''}</div><div class="v"></div></div>`).join('') +
+      `<div class="carry"><span>${$('grpt').textContent}</span><span></span></div>`;
+  }
+  $('grp').addEventListener('click', showGroup);
+  document.addEventListener('click', e => { if (e.target.closest('.cartlab')) { e.stopPropagation(); showGroup(); } }, true);
   // score sheet
   let sheetFor = 0;
   function openSheet(pk) { sheetFor = pk; const h = H[holeIdx]; $('sheett').textContent = `${players[pk].n} · hole ${h.hole} · par ${h.par}`; $('nums').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => `<button data-n="${n}" class="${n === h.par ? 'par' : ''}">${n}</button>`).join('');
@@ -484,6 +495,7 @@
   $('scorebtn2').addEventListener('click', () => { $('card').hidden = true; openSheet(0); });
   $('cardbtn2').addEventListener('click', () => { const open = $('card').hidden; $('card').hidden = !open; showCard = open; $('cardbtn2').textContent = open ? 'Close' : 'Card'; drawCard(); });
   map.on('click', e => {
+    if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.cartlab')) return;
     if (!$('card').hidden) { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; return; }
     if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) target = null; else target = e.latlng;
     redraw();
