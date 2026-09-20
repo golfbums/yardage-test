@@ -74,6 +74,9 @@
   .xmark svg { display: block; } .xmark path { stroke: var(--cream); stroke-width: 2.6; stroke-linecap: round; fill: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
   #map.sketch .xmark path { stroke: #2B2B27; filter: none; }
   .stick svg { display: block; } .stick .hole { fill: #2B2B27; } .stick .pole { stroke: #2B2B27; stroke-width: 1.5; } .stick .pennant { fill: #7A2E2E; }
+  .solo { width: 13px; height: 13px; border-radius: 300px; background: #A6D48A; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .orow .tag { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: var(--brown); font-weight: 400; margin-left: 6px; }
+  .orow .n .lg { font-size: 11px; color: var(--brown); font-weight: 400; }
   .cart { display: flex; gap: 3px; } .cart i { width: 11px; height: 11px; border-radius: 300px; background: #E3B278; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
   .cartlab { position: absolute; transform: translate(calc(-100% - 12px), -50%); white-space: nowrap; cursor: pointer; pointer-events: auto; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.9); padding: 4px 9px; border-radius: 300px; }
   #map.sketch .cartlab { font-family: var(--hand); font-size: 13px; color: #2B2B27; background: #F7F1DC; border: 1.4px solid #2B2B27; border-radius: 3px; }
@@ -83,6 +86,7 @@
   .seg2 button { flex: none; padding: 6px 12px; font-size: 13px; background: rgba(24,64,39,.1); color: var(--pine); border: 0; }
   .seg2 button.on { background: var(--pine); color: var(--cream); }
   .orow { display: grid; grid-template-columns: 26px 1fr 44px 44px 40px 40px; align-items: center; height: 36px; font-size: 14px; }
+  .orow .n { line-height: 1.05; }
   .orow.h { height: 20px; font-size: 11px; color: var(--brown); border-bottom: 1px solid rgba(0,0,0,.14); margin-bottom: 2px; text-transform: uppercase; }
   .orow .p { font-family: var(--num); font-size: 14px; color: var(--brown); }
   .orow .n { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .orow .n span { font-weight: 400; color: var(--brown); font-size: 12px; }
@@ -228,6 +232,15 @@
   const seed = (k, c) => ((k * 7 + c * 13) % 5); // deterministic "random" scores
   const cart2Scores = cart2.map((_, k) => Array(18).fill(null));
   function fillCart2() { for (let c = 0; c < 18; c++) for (let k = 0; k < 4; k++) cart2Scores[k][c] = (c <= holeIdx) ? H[c].par + [-1, 0, 0, 1, 2][seed(k, c)] : null; }
+  // bums with a live round today who aren't in our outing: hole they're on, scores so far
+  const others = [
+    { n: 'Hank', league: 'bums', ahead: 4, tp: [0, 1, 0, 0, 1, 2, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0] },
+    { n: 'Marcus', league: 'ball washers', ahead: -2, tp: [1, 0, 2, 1, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 1, 0, 0, 1] },
+    { n: 'Beau', league: 'ball washers', ahead: -2, tp: [-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0] },
+    { n: 'Dutch', league: 'bums', ahead: 0, solo: true, tp: [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0] },
+  ];
+  const otherHole = o => Math.max(0, Math.min(17, holeIdx + o.ahead));
+  const otherToPar = o => { const h = otherHole(o); let sum = 0; for (let k = 0; k < h; k++) sum += o.tp[k]; return { thru: h, txt: h ? (sum === 0 ? 'E' : (sum > 0 ? '+' : '') + sum) : '–', s: sum }; };
   let greenies = {}; try { greenies = JSON.parse(localStorage.getItem('pcc-greenies') || '{}'); } catch (_) {}
   let cardTab = 'card';
   try { const s = JSON.parse(localStorage.getItem('pcc-scores') || 'null'); if (s && s.length === 4) s.forEach((r, i) => scores[i] = r); } catch (_) {}
@@ -387,8 +400,19 @@
     upsert('cartlab', pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab">bums</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
     $('grp').hidden = false; $('grpt').textContent = 'bums · ' + (onGreen ? 'on the green' : 'in the fairway') + ' · hole ' + h.hole;
   }
+  function drawSolo() {
+    const h = H[holeIdx]; const who = others.filter(o => o.solo && otherHole(o) === holeIdx);
+    for (let k = 0; k < 3; k++) { drop('solo' + k); drop('sololab' + k); }
+    who.forEach((o, k) => {
+      // 45% down the hole, a touch left of the line
+      const line = h.line; const total = line.reduce((a, p, i, arr) => i ? a + ll(arr[i - 1]).distanceTo(ll(p)) : 0, 0); let want = 0.45 * total, pos = ll(line[0]);
+      for (let i = 1; i < line.length; i++) { const a = ll(line[i - 1]), b = ll(line[i]); const d = a.distanceTo(b); if (want <= d) { const u = want / d; pos = L.latLng(a.lat + (b.lat - a.lat) * u + 0.00012, a.lng + (b.lng - a.lng) * u - 0.00016); break; } want -= d; }
+      upsert('solo' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="solo"></div>', iconSize: [13, 13], iconAnchor: [6, 6] }) });
+      upsert('sololab' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab" data-who="' + o.n + '">' + o.n + '</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
+    });
+  }
   function drawHole() {
-    const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers();
+    const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers(); drawSolo();
     $('pillt').textContent = `${h.hole} · Par ${h.par} · ${t.yds}`;
     const rise = h.green.elev !== null && t.elev !== null ? Math.round(h.green.elev - t.elev) : null;
     $('sub').innerHTML = `<span>green <b>${h.green.depthYds || '—'}</b> deep</span><span>${rise === null ? '' : (rise > 0 ? '<b>+' + rise + '</b> ft uphill' : rise < 0 ? '<b>' + rise + '</b> ft downhill' : 'flat')}</span><span>${h.handicap ? 'hcp <b>' + h.handicap + '</b>' : ''}</span>`;
@@ -444,6 +468,7 @@
       players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div>${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('');
     if (showCard && cardTab === 'outing') { drawOuting(); return; }
     if (showCard && cardTab === 'group') { renderGroup(); return; }
+    if (showCard && cardTab === 'course') { renderCourse(); return; }
     if (showCard) {
       const names = `<div class="names"><div class="row h"><div>Hole</div></div>${players.map(pl => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div></div>`).join('')}</div>`;
       const page = (cols, tails) => `<div class="page"><div class="row h">${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>${players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}">${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('')}</div>`;
@@ -456,7 +481,7 @@
       document.querySelectorAll('.card .row').forEach(r => r.style.gridTemplateColumns = `1fr repeat(${cols.length}, 44px) 52px`);
     }
   }
-  const segHtml = () => `<div class="seg2"><button data-t="card" class="${cardTab === 'card' ? 'on' : ''}">Our cart</button><button data-t="group" class="${cardTab === 'group' ? 'on' : ''}">Cart ahead</button><button data-t="outing" class="${cardTab === 'outing' ? 'on' : ''}">Outing · 8</button></div>`;
+  const segHtml = () => `<div class="seg2"><button data-t="card" class="${cardTab === 'card' ? 'on' : ''}">Our cart</button><button data-t="group" class="${cardTab === 'group' ? 'on' : ''}">Cart ahead</button><button data-t="outing" class="${cardTab === 'outing' ? 'on' : ''}">Outing · 8</button><button data-t="course" class="${cardTab === 'course' ? 'on' : ''}">On course · ${8 + others.length}</button></div>`;
   // skins across the outing: lowest unique score takes the hole, ties carry
   function skins() {
     const all = [...players.map((p, k) => ({ n: p.n, sc: scores[k], me: !!p.me })), ...cart2.map((p, k) => ({ n: p.n, sc: cart2Scores[k] }))];
@@ -473,6 +498,18 @@
       `<div class="carry"><span>${detail.length ? 'Last skin: ' + detail[detail.length - 1][1] + ' on ' + detail[detail.length - 1][0] : 'No skins yet'}</span><span>carrying <b>${carry}</b></span></div>`;
   }
   $('card').addEventListener('click', e => { const b = e.target.closest('.seg2 button'); if (!b) return; cardTab = b.dataset.t; drawCard(); });
+  function renderCourse() {
+    const { all } = skins();
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return { n, txt: n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–' }; };
+    const rows = [
+      ...players.map((p, k) => ({ n: p.n, me: !!p.me, league: 'bums', hole: holeIdx, t: tot(scores[k]), tag: 'your cart' })),
+      ...cart2.map((p, k) => ({ n: p.n, league: 'bums', hole: Math.min(17, holeIdx + 1), t: tot(cart2Scores[k]), tag: 'outing' })),
+      ...others.map(o => { const t = otherToPar(o); return { n: o.n, league: o.league, hole: otherHole(o), t: { n: t.thru, txt: t.txt }, tag: '' }; }),
+    ].sort((a, b) => b.hole - a.hole || a.n.localeCompare(b.n));
+    $('card').innerHTML = segHtml() + `<div class="orow h"><div>#</div><div>On the course now</div><div class="v">thru</div><div class="v">to par</div><div class="v"></div><div class="v"></div></div>` +
+      rows.map(r => `<div class="orow${r.me ? ' me' : ''}"><div class="p">${r.hole + 1}</div><div class="n">${r.n}${r.tag ? '<span class="tag">' + r.tag + '</span>' : ''}<br><span class="lg">${r.league}</span></div><div class="v">${r.t.n || '–'}</div><div class="v">${r.t.txt}</div><div class="v"></div><div class="v"></div></div>`).join('') +
+      `<div class="carry"><span>Anyone in your leagues with a live round, while it's live. Go dark in Settings.</span><span></span></div>`;
+  }
   function showGroup() { cardTab = 'group'; $('card').hidden = false; showCard = true; $('cardbtn2').textContent = 'Close'; renderGroup(); }
   function renderGroup() {
     const { won } = skins(); const h = H[holeIdx];
@@ -482,7 +519,7 @@
       `<div class="carry"><span>${$('grpt').textContent}</span><span></span></div>`;
   }
   $('grp').addEventListener('click', showGroup);
-  document.addEventListener('click', e => { if (e.target.closest('.cartlab')) { e.stopPropagation(); showGroup(); } }, true);
+  document.addEventListener('click', e => { const l = e.target.closest('.cartlab'); if (!l) return; e.stopPropagation(); if (l.dataset.who) { cardTab = 'course'; $('card').hidden = false; showCard = true; $('cardbtn2').textContent = 'Close'; renderCourse(); } else showGroup(); }, true);
   // score sheet
   let sheetFor = 0;
   function openSheet(pk) { sheetFor = pk; const h = H[holeIdx]; $('sheett').textContent = `${players[pk].n} · hole ${h.hole} · par ${h.par}`; $('nums').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => `<button data-n="${n}" class="${n === h.par ? 'par' : ''}">${n}</button>`).join('');
@@ -491,7 +528,7 @@
   $('sheet').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; greenies[holeIdx] = greenies[holeIdx] === b.dataset.g ? undefined : b.dataset.g; try { localStorage.setItem('pcc-greenies', JSON.stringify(greenies)); } catch (_) {} [...$('gline').querySelectorAll('button')].forEach(x => x.classList.toggle('on', x.dataset.g === greenies[holeIdx])); });
   $('nums').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scores[sheetFor][holeIdx] = Number(b.dataset.n); try { localStorage.setItem('pcc-scores', JSON.stringify(scores)); } catch (_) {} $('sheet').hidden = true; drawCard(); });
   $('sheetx').addEventListener('click', () => { $('sheet').hidden = true; });
-  $('card').addEventListener('click', e => { const b = e.target.closest('button'); if (b) openSheet(Number(b.dataset.p)); });
+  $('card').addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b) openSheet(Number(b.dataset.p)); });
   $('scorebtn2').addEventListener('click', () => { $('card').hidden = true; openSheet(0); });
   $('cardbtn2').addEventListener('click', () => { const open = $('card').hidden; $('card').hidden = !open; showCard = open; $('cardbtn2').textContent = open ? 'Close' : 'Card'; drawCard(); });
   map.on('click', e => {
