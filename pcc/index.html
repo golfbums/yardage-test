@@ -88,16 +88,14 @@
   .pop .r b { font-family: var(--num); font-weight: 400; font-size: 17px; }
   #map.sketch ~ .pop, .mapwrap .pop.sk { background: #F7F1DC; border: 1.5px solid #2B2B27; border-radius: 4px; box-shadow: 1.5px 2px 0 rgba(43,43,39,.16); }
   .pop.sk .t, .pop.sk .r, .pop.sk .r b { font-family: var(--hand); text-transform: none; letter-spacing: 0; color: #2B2B27; }
-  .rail { position: absolute; left: 10px; top: 64px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: 22px; z-index: 500; pointer-events: none; }
-  .rail .ln { position: absolute; left: 10px; top: 0; bottom: 0; width: 1.2px; background: rgba(24,64,39,.35); }
-  #map.sat ~ .rail .ln { background: rgba(243,239,199,.55); }
-  .rail .tk { position: absolute; left: 7px; width: 7px; height: 1.2px; background: rgba(24,64,39,.35); }
-  #map.sat ~ .rail .tk { background: rgba(243,239,199,.55); }
-  .rail .no { position: absolute; left: 20px; transform: translateY(-50%); font-family: var(--num); font-size: 10px; color: rgba(24,64,39,.6); }
-  #map.sat ~ .rail .no { color: rgba(243,239,199,.7); }
-  .rail .g { position: absolute; left: 5px; width: 11px; height: 11px; border-radius: 300px; transform: translateY(-50%); background: #E3B278; border: 1.5px solid var(--pine); pointer-events: auto; cursor: pointer; }
-  .rail .g.me { background: var(--pine); border-color: var(--cream); width: 13px; height: 13px; left: 4px; }
-  .rail .g.one { background: #A6D48A; }
+  .rail { position: absolute; left: 10px; top: 64px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: 26px; z-index: 500; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; pointer-events: none; }
+  .rail .c { width: 24px; height: 24px; border-radius: 300px; border: 1.5px solid rgba(24,64,39,.45); display: flex; align-items: center; justify-content: center; font-family: var(--num); font-size: 12px; line-height: 1; color: rgba(24,64,39,.6); background: rgba(247,241,220,.6); pointer-events: auto; cursor: pointer; }
+  .rail .c.on { background: #E3B278; border-color: var(--pine); color: var(--pine); }
+  .rail .c.me { background: var(--pine); border-color: var(--cream); color: var(--cream); }
+  #map.sketch ~ .rail .c { font-family: var(--hand); font-size: 12px; border-color: rgba(43,43,39,.55); color: rgba(43,43,39,.65); background: #F7F1DC; border-radius: 4px; }
+  #map.sketch ~ .rail .c.on { background: #E3B278; border-color: #2B2B27; color: #2B2B27; }
+  #map.sketch ~ .rail .c.me { background: #2B2B27; border-color: #F7F1DC; color: #F7F1DC; }
+  #map.sat ~ .rail .c { border-color: rgba(243,239,199,.6); color: rgba(243,239,199,.8); background: rgba(24,64,39,.5); }
   .cart { display: flex; gap: 3px; } .cart i { width: 11px; height: 11px; border-radius: 300px; background: #E3B278; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
   .cartlab { position: absolute; transform: translate(calc(-100% - 12px), -50%); white-space: nowrap; cursor: pointer; pointer-events: auto; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.9); padding: 4px 9px; border-radius: 300px; }
   #map.sketch .cartlab { font-family: var(--hand); font-size: 13px; color: #2B2B27; background: #F7F1DC; border: 1.4px solid #2B2B27; border-radius: 3px; }
@@ -399,8 +397,10 @@
     H.forEach((h, i) => { let d = 1e9; for (let k = 0; k + 1 < h.line.length; k++) d = Math.min(d, segD(p, h.line[k], h.line[k + 1])); if (i === holeIdx) d *= 0.6; if (d < bd) { bd = d; best = i; } });
     return best;
   }
-  let frames = 0;
+  let frames = 0, programmatic = false, userView = false;
+  map.on('zoomstart movestart', () => { if (!programmatic) userView = true; });
   function frame() {
+    programmatic = true; setTimeout(() => { programmatic = false; }, 900);
     const h = H[holeIdx]; const t = ll(teeOf(h).center), g = ll(h.green.center);
     const ref = t; // the whole hole: tee at the bottom, green at the top
     map.setBearing(-bearing(ref, g));
@@ -410,7 +410,16 @@
     const mppZ = 156543.03 * Math.cos(g.lat * Math.PI / 180) / Math.pow(2, z);
     const back = (0.5 - 0.16) * hgt * mppZ; const rad = (bearing(ref, g) + 180) * Math.PI / 180;
     const c = L.latLng(g.lat + Math.cos(rad) * back / 111320, g.lng + Math.sin(rad) * back / (111320 * Math.cos(g.lat * Math.PI / 180)));
-    map.setView(c, z, { animate: started && frames > 0 }); frames++; framed = true;
+    map.setView(c, z, { animate: started && frames > 0 }); frames++; framed = true; userView = false;
+  }
+  // the approach: fit you (or the tee), the target and the green, green still at the top
+  function frameApproach() {
+    const h = H[holeIdx]; const g = ll(h.green.center); const p = me && onHole(L.latLng(me.lat, me.lng), h) ? L.latLng(me.lat, me.lng) : ll(teeOf(h).center);
+    programmatic = true; setTimeout(() => { programmatic = false; }, 900);
+    map.setBearing(-bearing(p, g));
+    const bnds = L.latLngBounds([p, target, g]);
+    map.fitBounds(bnds, { paddingTopLeft: [60, 90], paddingBottomRight: [60, 140], animate: true, maxZoom: 19 });
+    framed = true; userView = false;
   }
   function drawOthers() {
     // JJ's cart is a hole ahead: on our green when we're on the tee, then gone up the next hole
@@ -437,16 +446,18 @@
       upsert('sololab' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab" data-who="' + o.n + '">bum</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
     });
   }
+  function whoOn(hole) {
+    const out = [];
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–'; };
+    if (hole === holeIdx) players.forEach((p, k) => out.push([p.n, tot(scores[k]), p.guest]));
+    if (hole === Math.min(17, holeIdx + 1)) cart2.forEach((p, k) => out.push([p.n, tot(cart2Scores[k])]));
+    others.forEach(o => { if (otherHole(o) === hole) out.push([o.n, otherToPar(o).txt]); });
+    return out;
+  }
   function drawRail() {
-    const rail = $('rail'); const hgt = rail.clientHeight || 500; const y = hole => hgt - (hole + 0.5) / 18 * hgt; // hole 1 at the bottom, 18 at the top
-    const groups = [{ hole: holeIdx, cls: 'me', title: 'your cart', who: () => popover('your cart · hole ' + (holeIdx + 1), players.map((p, k) => { let s = 0, n = 0; scores[k].forEach((v, c) => { if (v !== null) { s += v - H[c].par; n++; } }); return [p.n, n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–', p.guest]; })) },
-      { hole: Math.min(17, holeIdx + 1), cls: '', who: popCart2 },
-      ...others.map(o => ({ hole: otherHole(o), cls: 'one', who: () => popSolo(o.n) }))];
-    // spread groups that share a hole
-    const seen = {};
-    rail.innerHTML = '<div class="ln"></div>' + [...Array(18).keys()].map(k => `<div class="tk" style="top:${y(k)}px"></div>` + ([0, 8, 17].includes(k) ? `<div class="no" style="top:${y(k)}px">${k + 1}</div>` : '')).join('') +
-      groups.map((g, i) => { const n = seen[g.hole] = (seen[g.hole] || 0) + 1; return `<div class="g ${g.cls}" data-i="${i}" style="top:${y(g.hole)}px; left:${(g.cls === 'me' ? 4 : 5) + (n - 1) * 6}px"></div>`; }).join('');
-    rail.onclick = e => { const d = e.target.closest('.g'); if (!d) return; e.stopPropagation(); groups[Number(d.dataset.i)].who(); };
+    const rail = $('rail');
+    rail.innerHTML = [...Array(18).keys()].map(k => { const who = whoOn(k); const cls = k === holeIdx ? 'me' : (who.length ? 'on' : ''); return `<div class="c ${cls}" data-h="${k}">${k + 1}</div>`; }).join('');
+    rail.onclick = e => { const el = e.target.closest('.c'); if (!el) return; e.stopPropagation(); const k = Number(el.dataset.h); const who = whoOn(k); if (!who.length) { $('pop').hidden = true; return; } popover((k === holeIdx ? 'your hole' : 'hole ' + (k + 1)) + ' · ' + who.length + (who.length === 1 ? ' bum' : ' bums'), who); };
   }
   function drawHole() {
     const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers(); drawSolo(); drawRail();
@@ -488,7 +499,7 @@
         ? `<span><small>target</small> <b>${fmt(p.distanceTo(target))}</b></span><span><small>in</small> ${fmt(target.distanceTo(g))}</span><span><small>F</small> ${fmt(df)} · <small>B</small> ${fmt(db)}</span>`
         : `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
       const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} yd`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
-      if (!framed) frame(); else { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
+      if (!framed) frame(); else if (!userView) { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
       drawOthers(); drawRail();
     } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: L.divIcon({ className: '', html: '<div class="teelab" style="background:#E3B278;position:static;transform:none"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) });
       if (target) { if (!L_.ray) L_.ray = L.polyline(arc(t, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, target, .07)); if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06)); upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'approach'); }
@@ -574,12 +585,12 @@
   map.on('click', e => {
     if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.cartlab')) return;
     if (!$('card').hidden) { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; return; }
-    if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) target = null; else target = e.latlng;
-    redraw();
+    if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) { target = null; framed = false; redraw(); return; }
+    target = e.latlng; redraw(); frameApproach();
   });
   $('prev').addEventListener('click', () => { holeIdx = (holeIdx + 17) % 18; drawHole(); });
   $('next').addEventListener('click', () => { holeIdx = (holeIdx + 1) % 18; drawHole(); });
-  map.on('dragstart', () => { framed = true; }); // your drag holds until you leave the screen
+  map.on('dragstart', () => { framed = true; userView = true; });
 
   // USGS elevation under you, at most every 5 s / 5 m
   let lastU = 0, lastUP = null;
