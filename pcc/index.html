@@ -77,6 +77,27 @@
   .solo { width: 13px; height: 13px; border-radius: 300px; background: #A6D48A; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
   .orow .tag { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: var(--brown); font-weight: 400; margin-left: 6px; }
   .orow .n .lg { font-size: 11px; color: var(--brown); font-weight: 400; }
+  #map.sketch path.sk-tee { fill: #F7F1DC; stroke: #2B2B27; stroke-width: 1.2; }
+  #map.sketch path.sk-tee.on { fill: #E3B278; }
+  #map.sat path.sk-tee { fill: rgba(227,178,120,.55); stroke: #FFFDD0; stroke-width: 1.2; }
+  #map.sat path.sk-tee.on { fill: #E3B278; }
+  .pop { position: absolute; left: 14px; right: 14px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 700; background: var(--card); color: var(--pine); border-radius: 18px; padding: 10px 14px 8px; box-shadow: 0 10px 30px rgba(24,64,39,.35); }
+  .pop .t { font-family: var(--num); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--brown); margin-bottom: 4px; }
+  .pop .r { display: flex; justify-content: space-between; align-items: center; height: 30px; font-size: 14px; font-weight: 700; }
+  .pop .r span { font-weight: 400; color: var(--brown); font-size: 12px; }
+  .pop .r b { font-family: var(--num); font-weight: 400; font-size: 17px; }
+  #map.sketch ~ .pop, .mapwrap .pop.sk { background: #F7F1DC; border: 1.5px solid #2B2B27; border-radius: 4px; box-shadow: 1.5px 2px 0 rgba(43,43,39,.16); }
+  .pop.sk .t, .pop.sk .r, .pop.sk .r b { font-family: var(--hand); text-transform: none; letter-spacing: 0; color: #2B2B27; }
+  .rail { position: absolute; left: 10px; top: 64px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: 22px; z-index: 500; pointer-events: none; }
+  .rail .ln { position: absolute; left: 10px; top: 0; bottom: 0; width: 1.2px; background: rgba(24,64,39,.35); }
+  #map.sat ~ .rail .ln { background: rgba(243,239,199,.55); }
+  .rail .tk { position: absolute; left: 7px; width: 7px; height: 1.2px; background: rgba(24,64,39,.35); }
+  #map.sat ~ .rail .tk { background: rgba(243,239,199,.55); }
+  .rail .no { position: absolute; left: 20px; transform: translateY(-50%); font-family: var(--num); font-size: 10px; color: rgba(24,64,39,.6); }
+  #map.sat ~ .rail .no { color: rgba(243,239,199,.7); }
+  .rail .g { position: absolute; left: 5px; width: 11px; height: 11px; border-radius: 300px; transform: translateY(-50%); background: #E3B278; border: 1.5px solid var(--pine); pointer-events: auto; cursor: pointer; }
+  .rail .g.me { background: var(--pine); border-color: var(--cream); width: 13px; height: 13px; left: 4px; }
+  .rail .g.one { background: #A6D48A; }
   .cart { display: flex; gap: 3px; } .cart i { width: 11px; height: 11px; border-radius: 300px; background: #E3B278; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
   .cartlab { position: absolute; transform: translate(calc(-100% - 12px), -50%); white-space: nowrap; cursor: pointer; pointer-events: auto; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.9); padding: 4px 9px; border-radius: 300px; }
   #map.sketch .cartlab { font-family: var(--hand); font-size: 13px; color: #2B2B27; background: #F7F1DC; border: 1.4px solid #2B2B27; border-radius: 3px; }
@@ -193,6 +214,8 @@
     <div class="hint" id="hint"></div>
     <div class="look"><button id="lookSketch" class="on">Sketch</button><button id="lookSat">Satellite</button></div>
     <div class="grp" id="grp" hidden><i></i><span id="grpt"></span></div>
+    <div class="pop" id="pop" hidden></div>
+    <div class="rail" id="rail"></div>
     <span class="chip" id="acc">GPS</span>
     <div class="yard">
       <div class="fmb" id="fmb"><span><small>F</small> —</span><b id="mid">—</b><span><small>B</small> —</span></div>
@@ -304,6 +327,7 @@
     const add = l => { l.addTo(map); holeLayers.push(l); return l; };
     const P = (pts, cls, extra) => add(L.polygon(ring(pts), Object.assign({ className: cls, interactive: false, fill: true, fillOpacity: 1, opacity: 1, noClip: true, smoothFactor: 0 }, extra || {})));
     $('map').className = look; document.getElementById('lookSketch').classList.toggle('on', look === 'sketch'); document.getElementById('lookSat').classList.toggle('on', look === 'sat');
+    h.tees.forEach((x, k) => { if (x.ring) add(L.polygon(ring(x.ring), { className: 'sk-tee' + (k === Math.min(teeIdx, h.tees.length - 1) ? ' on' : ''), interactive: false, noClip: true, smoothFactor: 0, fill: true, fillOpacity: 1, opacity: 1 })); });
     if (look === 'sat') {
       const st = { fw: { color: '#FFFDD0', weight: 1.2, opacity: .55, fill: true, fillColor: '#A6D48A', fillOpacity: .10 }, bk: { color: '#F0D8AA', weight: 1.2, fill: true, fillColor: '#F0D8AA', fillOpacity: .35 }, w: { color: '#F3EFC7', weight: 1.2, dashArray: '5 4', fill: true, fillColor: '#3A6B5A', fillOpacity: .25 }, g: { color: '#A6D48A', weight: 3, fill: true, fillColor: '#A6D48A', fillOpacity: .28 } };
       h.fairways.forEach(r => P(r, '', st.fw)); h.water.forEach(r => P(r, '', st.w)); h.bunkers.forEach(r => P(r, '', st.bk)); P(h.green.ring, '', st.g);
@@ -405,20 +429,32 @@
     for (let k = 0; k < 3; k++) { drop('solo' + k); drop('sololab' + k); }
     who.forEach((o, k) => {
       // 45% down the hole, a touch left of the line
-      const line = h.line; const total = line.reduce((a, p, i, arr) => i ? a + ll(arr[i - 1]).distanceTo(ll(p)) : 0, 0); let want = 0.45 * total, pos = ll(line[0]);
-      for (let i = 1; i < line.length; i++) { const a = ll(line[i - 1]), b = ll(line[i]); const d = a.distanceTo(b); if (want <= d) { const u = want / d; pos = L.latLng(a.lat + (b.lat - a.lat) * u + 0.00012, a.lng + (b.lng - a.lng) * u - 0.00016); break; } want -= d; }
+      const line = h.line; const total = line.reduce((a, p, i, arr) => i ? a + ll(arr[i - 1]).distanceTo(ll(p)) : 0, 0); let want = 0.3 * total, pos = ll(line[0]);
+      for (let i = 1; i < line.length; i++) { const a = ll(line[i - 1]), b = ll(line[i]); const d = a.distanceTo(b); if (want <= d) { const u = want / d; pos = L.latLng(a.lat + (b.lat - a.lat) * u, a.lng + (b.lng - a.lng) * u); break; } want -= d; }
+      // step 30 m to the left of the hole line (perpendicular), so nothing sits on the yardage
+      const g = ll(h.green.center); const bx = (g.lng - pos.lng) * Math.cos(pos.lat * Math.PI / 180), by = g.lat - pos.lat; const L2 = Math.hypot(bx, by) || 1; const px = -by / L2, py = bx / L2; pos = L.latLng(pos.lat + py * 30 / 111320, pos.lng + px * 30 / (111320 * Math.cos(pos.lat * Math.PI / 180)));
       upsert('solo' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="solo"></div>', iconSize: [13, 13], iconAnchor: [6, 6] }) });
-      upsert('sololab' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab" data-who="' + o.n + '">' + o.n + '</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
+      upsert('sololab' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab" data-who="' + o.n + '">bum</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
     });
   }
+  function drawRail() {
+    const rail = $('rail'); const hgt = rail.clientHeight || 500; const y = hole => hgt - (hole + 0.5) / 18 * hgt; // hole 1 at the bottom, 18 at the top
+    const groups = [{ hole: holeIdx, cls: 'me', title: 'your cart', who: () => popover('your cart · hole ' + (holeIdx + 1), players.map((p, k) => { let s = 0, n = 0; scores[k].forEach((v, c) => { if (v !== null) { s += v - H[c].par; n++; } }); return [p.n, n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–', p.guest]; })) },
+      { hole: Math.min(17, holeIdx + 1), cls: '', who: popCart2 },
+      ...others.map(o => ({ hole: otherHole(o), cls: 'one', who: () => popSolo(o.n) }))];
+    // spread groups that share a hole
+    const seen = {};
+    rail.innerHTML = '<div class="ln"></div>' + [...Array(18).keys()].map(k => `<div class="tk" style="top:${y(k)}px"></div>` + ([0, 8, 17].includes(k) ? `<div class="no" style="top:${y(k)}px">${k + 1}</div>` : '')).join('') +
+      groups.map((g, i) => { const n = seen[g.hole] = (seen[g.hole] || 0) + 1; return `<div class="g ${g.cls}" data-i="${i}" style="top:${y(g.hole)}px; left:${(g.cls === 'me' ? 4 : 5) + (n - 1) * 6}px"></div>`; }).join('');
+    rail.onclick = e => { const d = e.target.closest('.g'); if (!d) return; e.stopPropagation(); groups[Number(d.dataset.i)].who(); };
+  }
   function drawHole() {
-    const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers(); drawSolo();
+    const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers(); drawSolo(); drawRail();
     $('pillt').textContent = `${h.hole} · Par ${h.par} · ${t.yds}`;
     const rise = h.green.elev !== null && t.elev !== null ? Math.round(h.green.elev - t.elev) : null;
     $('sub').innerHTML = `<span>green <b>${h.green.depthYds || '—'}</b> deep</span><span>${rise === null ? '' : (rise > 0 ? '<b>+' + rise + '</b> ft uphill' : rise < 0 ? '<b>' + rise + '</b> ft downhill' : 'flat')}</span><span>${h.handicap ? 'hcp <b>' + h.handicap + '</b>' : ''}</span>`;
     drop('flag'); if (look === 'sketch') upsert('flag', ll(h.green.center), { icon: L.divIcon({ className: '', html: stickSvg, iconSize: [26, 34], iconAnchor: [8, 31] }) }); else upsert('flag', ll(h.green.center), { icon: icon('flag', 30, flagSvg) });
     for (let k = 0; k < 4; k++) drop('tee' + k);
-    h.tees.forEach((x, k) => upsert('tee' + k, ll(x.center), { icon: L.divIcon({ className: '', html: `<div class="teelab" style="background:${TEE_COLORS[x.color] || TEE_COLORS.null}"></div>`, iconSize: [0, 0], iconAnchor: [0, 0] }) }));
     if (!L_.line) L_.line = L.polyline(h.line.map(p => [p.lat, p.lon]), { color: 'rgba(243,239,199,.55)', weight: 1.5, dashArray: '2 8', interactive: false }).addTo(map); else L_.line.setLatLngs(h.line.map(p => [p.lat, p.lon]));
     framed = false; target = null; drop('ray2'); redraw();
   }
@@ -453,7 +489,7 @@
         : `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
       const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} yd`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
       if (!framed) frame(); else { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
-      drawOthers();
+      drawOthers(); drawRail();
     } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: L.divIcon({ className: '', html: '<div class="teelab" style="background:#E3B278;position:static;transform:none"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) });
       if (target) { if (!L_.ray) L_.ray = L.polyline(arc(t, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, target, .07)); if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06)); upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'approach'); }
       else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
@@ -518,8 +554,12 @@
       cart2.map((p, k) => `<div class="orow"><div class="p"></div><div class="n">${p.n}</div><div class="v">${cart2Scores[k].filter(v => v !== null).length}</div><div class="v">${tot(cart2Scores[k])}</div><div class="v sk">${won[p.n] || ''}</div><div class="v"></div></div>`).join('') +
       `<div class="carry"><span>${$('grpt').textContent}</span><span></span></div>`;
   }
-  $('grp').addEventListener('click', showGroup);
-  document.addEventListener('click', e => { const l = e.target.closest('.cartlab'); if (!l) return; e.stopPropagation(); if (l.dataset.who) { cardTab = 'course'; $('card').hidden = false; showCard = true; $('cardbtn2').textContent = 'Close'; renderCourse(); } else showGroup(); }, true);
+  $('grp').addEventListener('click', () => popCart2());
+  const par2 = (o) => otherToPar(o).txt;
+  function popover(title, rows) { $('pop').className = 'pop' + (look === 'sketch' ? ' sk' : ''); $('pop').innerHTML = `<div class="t">${title}</div>` + rows.map(r => `<div class="r"><div>${r[0]}${r[2] ? ' <span>guest</span>' : ''}</div><b>${r[1]}</b></div>`).join(''); $('pop').hidden = false; }
+  function popCart2() { const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–'; }; popover($('grpt').textContent, cart2.map((p, k) => [p.n, tot(cart2Scores[k])])); }
+  function popSolo(name) { const o = others.find(x => x.n === name); if (!o) return; popover('bum · hole ' + (otherHole(o) + 1), [[o.n, par2(o)]]); }
+  document.addEventListener('click', e => { const l = e.target.closest('.cartlab'); if (!l) { if (!e.target.closest('.pop') && !e.target.closest('.rail')) $('pop').hidden = true; return; } e.stopPropagation(); if (l.dataset.who) popSolo(l.dataset.who); else popCart2(); }, true);
   // score sheet
   let sheetFor = 0;
   function openSheet(pk) { sheetFor = pk; const h = H[holeIdx]; $('sheett').textContent = `${players[pk].n} · hole ${h.hole} · par ${h.par}`; $('nums').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => `<button data-n="${n}" class="${n === h.par ? 'par' : ''}">${n}</button>`).join('');
