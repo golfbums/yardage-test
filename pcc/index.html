@@ -21,7 +21,7 @@
   .pill .arw { padding: 0 16px; font-size: 22px; line-height: 44px; cursor: pointer; }
   .pill .t { flex: 1; text-align: center; font-family: var(--num); font-size: 20px; letter-spacing: .5px; text-transform: uppercase; line-height: 44px; }
   .pill .badge { margin-right: 12px; font-family: var(--num); font-size: 12px; padding: 2px 8px; border-radius: 300px; background: #F3EFC7; color: var(--pine); }
-  .sub { display: flex; justify-content: center; gap: 14px; font-size: 13px; color: rgba(243,239,199,.8); margin-top: 6px; }
+  .sub { display: none; justify-content: center; gap: 14px; font-size: 13px; color: rgba(243,239,199,.8); margin-top: 6px; }
   .sub b { font-family: var(--num); font-weight: 400; font-size: 15px; color: var(--cream); }
   .mapwrap { position: relative; flex: 1 1 0; min-height: 0; }
   #map { position: absolute; inset: 0; background: #2E4A34; }
@@ -30,21 +30,23 @@
   .me-dot { width: 18px; height: 18px; border-radius: 300px; background: var(--cream); border: 3px solid var(--pine); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
   .me-ring { width: 64px; height: 64px; border-radius: 300px; border: 2.5px solid var(--cream); box-shadow: 0 0 0 1px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25); }
   .flag { width: 30px; height: 30px; border-radius: 300px; background: var(--red); border: 3px solid var(--cream); box-shadow: 0 2px 6px rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
-  .ylab { position: absolute; transform: translate(-50%, -50%); font-family: var(--num); font-size: 24px; line-height: 1; color: var(--cream); background: rgba(24,64,39,.88); border: 1.5px solid rgba(243,239,199,.55); border-radius: 12px; padding: 6px 11px 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align: center; }
+  .ylab { position: absolute; transform: translate(-50%, -50%); font-family: var(--num); font-size: 30px; line-height: 1; color: var(--cream); background: rgba(24,64,39,.88); border: 1.5px solid rgba(243,239,199,.55); border-radius: 12px; padding: 6px 11px 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align: center; }
   .ylab small { display: block; font-size: 10px; letter-spacing: 1px; color: rgba(243,239,199,.75); margin-top: 2px; }
   .teelab { position: absolute; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 3px; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
-  .chip { position: absolute; top: 12px; right: 12px; z-index: 500; font-family: var(--num); font-size: 13px; letter-spacing: .6px; padding: 5px 11px; border-radius: 300px; background: rgba(24,64,39,.78); border: 1px solid rgba(243,239,199,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .chip { display: none; position: absolute; top: 12px; right: 12px; z-index: 500; font-family: var(--num); font-size: 13px; letter-spacing: .6px; padding: 5px 11px; border-radius: 300px; background: rgba(24,64,39,.78); border: 1px solid rgba(243,239,199,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .chip.good { background: var(--putt); color: var(--pine); border-color: transparent; }
   .chip.ok { background: var(--tan); color: var(--pine); border-color: transparent; }
-  .chip.bad { background: var(--red); color: var(--cream); border-color: transparent; }
-  .hint { position: absolute; top: 14px; left: 12px; right: 96px; z-index: 500; font-size: 13px; color: var(--cream); text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; }
-  .yard { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 500; border-radius: 22px; padding: 12px 18px; background: rgba(248,200,158,.94); color: var(--pine); border: 1px solid rgba(24,64,39,.14); box-shadow: 0 10px 30px rgba(24,64,39,.35); display: flex; align-items: center; gap: 14px; }
-  .yard .big { font-family: var(--num); font-size: 64px; line-height: 60px; min-width: 96px; }
-  .yard .lbl { font-family: var(--num); font-size: 12px; letter-spacing: 1.1px; text-transform: uppercase; color: var(--brown); }
-  .yard .fb { margin-left: auto; text-align: right; font-size: 13px; line-height: 18px; }
-  .yard .fb b { font-family: var(--num); font-weight: 400; font-size: 20px; letter-spacing: .3px; }
+  .chip.bad { display: block; background: var(--red); color: var(--cream); border-color: transparent; }
+  .hint { display: none; position: absolute; top: 14px; left: 12px; right: 96px; z-index: 500; font-size: 13px; color: var(--cream); text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; }
+  .yard { position: absolute; left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 500; display: flex; align-items: center; gap: 8px; }
+  .yard .fmb { flex: 1 1 0; display: flex; align-items: baseline; justify-content: center; gap: 12px; padding: 9px 14px; border-radius: 300px; background: rgba(24,64,39,.78); border: 1px solid rgba(243,239,199,.18); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--cream); font-family: var(--num); font-size: 15px; letter-spacing: .4px; white-space: nowrap; }
+  .yard .fmb b { font-weight: 400; font-size: 26px; line-height: 1; }
+  .yard .fmb small { font-size: 11px; letter-spacing: 1px; color: rgba(243,239,199,.7); }
+  .yard .btn { flex: none; padding: 11px 16px; font-size: 14px; }
+  .yard .btn.primary { padding: 11px 18px; }
+  .big, .lbl, .fb { display: none; }
   /* the card strip: uniform rows, one thumb */
-  .card { flex: none; margin: 10px 14px 0; background: var(--card); color: var(--pine); border-radius: 18px; padding: 8px 12px 8px 14px; }
+  .card { position: absolute; left: 14px; right: 14px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); z-index: 800; box-shadow: 0 10px 30px rgba(24,64,39,.45); margin: 0; background: var(--card); color: var(--pine); border-radius: 18px; padding: 8px 12px 8px 14px; }
   .row { display: grid; grid-template-columns: 1fr 44px 44px 44px 52px; align-items: center; height: 38px; font-size: 14px; }
   .row.h { height: 20px; font-size: 11px; color: var(--brown); border-bottom: 1px solid rgba(0,0,0,.14); margin-bottom: 2px; }
   .row .n { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .row .n span { font-weight: 400; color: var(--brown); font-size: 12px; }
@@ -54,7 +56,7 @@
   .row .now { display: inline-flex; align-items: center; justify-content: center; gap: 0; }
   .row .now button { flex: none; width: 30px; height: 30px; padding: 0; border-radius: 300px; background: var(--pine); color: var(--cream); font-family: var(--num); font-size: 17px; line-height: 1; border: 0; }
   .row .now button.empty { background: transparent; color: var(--pine); border: 2px dashed var(--pine); }
-  .bar { flex: none; display: flex; gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .bar { display: none; flex: none; gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)); }
   button { flex: 1 1 0; font: inherit; font-family: var(--num); font-size: 16px; letter-spacing: .8px; text-transform: uppercase; color: var(--cream); background: rgba(243,239,199,.14); border: 1px solid rgba(243,239,199,.22); border-radius: 300px; padding: 12px 0; cursor: pointer; }
   button.primary { background: var(--champagne); color: var(--pine); border-color: transparent; }
   button:disabled { opacity: .4; }
@@ -98,16 +100,18 @@
     <div class="hint" id="hint"></div>
     <span class="chip" id="acc">GPS</span>
     <div class="yard">
-      <div><div class="big" id="big">—</div><div class="lbl" id="biglbl">to the middle</div></div>
-      <div class="fb" id="fb"><b>—</b> front<br><b>—</b> back</div>
+      <div class="fmb" id="fmb"><span><small>F</small> —</span><b id="mid">—</b><span><small>B</small> —</span></div>
+      <button class="btn" id="cardbtn2">Card</button>
+      <button class="btn primary" id="scorebtn2">Score</button>
     </div>
+    <div hidden><span id="big"></span><span id="biglbl"></span><span id="fb"></span></div>
     <div class="sheet" id="sheet" hidden>
       <button class="x" id="sheetx">✕</button>
       <div class="ttl" id="sheett">Hole 1 · par 4</div>
       <div class="nums" id="nums"></div>
     </div>
   </div>
-  <div class="card" id="card"></div>
+  <div class="card" id="card" hidden></div>
   <div class="bar">
     <button id="simbtn" hidden>Sim walk</button>
     <button id="scorebtn">Score this hole</button>
@@ -166,10 +170,10 @@
     const ref = (me && p.distanceTo(g) < t.distanceTo(g)) ? p : t; // frame from you if you're past the tee
     map.setBearing(-bearing(ref, g));
     const d = Math.max(ref.distanceTo(g), 80);
-    const hgt = map.getSize().y; const mpp = d / (hgt * 0.60);
+    const hgt = map.getSize().y; const mpp = d / (hgt * 0.66);
     const z = Math.min(19, Math.max(15, Math.log2(156543.03 * Math.cos(g.lat * Math.PI / 180) / mpp)));
     const mppZ = 156543.03 * Math.cos(g.lat * Math.PI / 180) / Math.pow(2, z);
-    const back = (0.5 - 0.15) * hgt * mppZ; const rad = (bearing(ref, g) + 180) * Math.PI / 180;
+    const back = (0.5 - 0.14) * hgt * mppZ; const rad = (bearing(ref, g) + 180) * Math.PI / 180;
     const c = L.latLng(g.lat + Math.cos(rad) * back / 111320, g.lng + Math.sin(rad) * back / (111320 * Math.cos(g.lat * Math.PI / 180)));
     map.setView(c, z, { animate: started }); framed = true;
   }
@@ -196,9 +200,10 @@
       const rise = h.green.elev !== null && me.elevUSGS != null ? h.green.elev - me.elevUSGS : null;
       $('biglbl').textContent = rise === null ? 'to the middle' : `to the middle · plays ${Math.round(d / M_PER_YD + rise / 3)}`;
       $('fb').innerHTML = `<b>${fmt(df)}</b> front<br><b>${fmt(db)}</b> back`;
+      $('fmb').innerHTML = `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
       const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} yd`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
       if (!framed) frame(); else { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
-    } else { if (!framed) frame(); const t = ll(teeOf(h).center); $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; }
+    } else { if (!framed) frame(); const t = ll(teeOf(h).center); $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
     drawCard();
   }
   function drawCard() {
@@ -216,8 +221,9 @@
   $('nums').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scores[sheetFor][holeIdx] = Number(b.dataset.n); try { localStorage.setItem('pcc-scores', JSON.stringify(scores)); } catch (_) {} $('sheet').hidden = true; drawCard(); });
   $('sheetx').addEventListener('click', () => { $('sheet').hidden = true; });
   $('card').addEventListener('click', e => { const b = e.target.closest('button'); if (b) openSheet(Number(b.dataset.p)); });
-  $('scorebtn').addEventListener('click', () => openSheet(0));
-  $('cardbtn').addEventListener('click', () => { showCard = !showCard; $('cardbtn').textContent = showCard ? 'Hole' : 'Card'; drawCard(); });
+  $('scorebtn2').addEventListener('click', () => { $('card').hidden = true; openSheet(0); });
+  $('cardbtn2').addEventListener('click', () => { const open = $('card').hidden; $('card').hidden = !open; showCard = open; $('cardbtn2').textContent = open ? 'Close' : 'Card'; drawCard(); });
+  map.on('click', () => { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; });
   $('prev').addEventListener('click', () => { holeIdx = (holeIdx + 17) % 18; drawHole(); });
   $('next').addEventListener('click', () => { holeIdx = (holeIdx + 1) % 18; drawHole(); });
   map.on('dragstart', () => { framed = true; }); // your drag holds until you leave the screen
