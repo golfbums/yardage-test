@@ -79,6 +79,7 @@
   .gate .tees button { flex: none; padding: 10px 18px; }
   .gate .tees button.on { background: var(--champagne); color: var(--pine); border-color: transparent; }
   .gate button.primary { flex: none; padding: 14px 34px; }
+  .gate #browse { flex: none; padding: 12px 26px; }
   .gate .err { color: var(--tan); font-size: 14px; max-width: 36ch; }
   .gate .fine { font-size: 12px; color: rgba(243,239,199,.6); }
 </style>
@@ -92,6 +93,7 @@
     <div class="tees" id="teesel"></div>
     <button class="primary" id="start">Play · allow location</button>
     <div class="err" id="err"></div>
+    <button id="browse" hidden>Browse from the tees</button>
     <div class="fine">Outlines © OpenStreetMap contributors · Elevation: USGS · Photo: Esri</div>
   </div>
   <div class="hdr">
@@ -306,7 +308,8 @@
     $('hint').textContent = `hole ${H[holeIdx].hole} — found by GPS`;
     redraw();
   }
-  function onErr(e) { $('err').textContent = e.code === 1 ? 'Location is blocked. Settings › Privacy › Location Services › Safari Websites → While Using, Precise on. Then reload.' : 'No GPS fix yet — step outside and try again.'; $('gate').hidden = false; }
+  function onErr(e) { $('err').textContent = e.code === 1 ? 'Location is blocked. Settings › Privacy › Location Services › Safari Websites → While Using, Precise on. Then reload.' : 'No GPS fix yet — step outside and try again.'; $('gate').hidden = false; $('browse').hidden = false; }
+  $('browse').addEventListener('click', () => { $('gate').hidden = true; setTimeout(() => map.invalidateSize(), 50); drawHole(); });
   $('start').addEventListener('click', () => {
     $('gate').hidden = true; setTimeout(() => map.invalidateSize(), 50);
     if (sim) { // desktop check: walk hole N from its tee toward its green
