@@ -32,6 +32,8 @@
   .flag { width: 30px; height: 30px; border-radius: 300px; background: var(--red); border: 3px solid var(--cream); box-shadow: 0 2px 6px rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
   .ylab { position: absolute; transform: translate(-50%, -50%); font-family: var(--num); font-size: 30px; line-height: 1; color: var(--cream); background: rgba(24,64,39,.88); border: 1.5px solid rgba(243,239,199,.55); border-radius: 12px; padding: 6px 11px 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align: center; }
   .ylab small { display: block; font-size: 10px; letter-spacing: 1px; color: rgba(243,239,199,.75); margin-top: 2px; }
+  .tgt { width: 22px; height: 22px; border-radius: 300px; border: 2.5px solid var(--cream); background: rgba(24,64,39,.35); box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+  .ylab.sm { font-size: 22px; padding: 5px 10px 4px; }
   .teelab { position: absolute; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 3px; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
   .chip { display: none; position: absolute; top: 12px; right: 12px; z-index: 500; font-family: var(--num); font-size: 13px; letter-spacing: .6px; padding: 5px 11px; border-radius: 300px; background: rgba(24,64,39,.78); border: 1px solid rgba(243,239,199,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .chip.good { background: var(--putt); color: var(--pine); border-color: transparent; }
@@ -128,7 +130,7 @@
   const C = window.COURSE; const H = C.holes;
   const TEE_COLORS = { black: '#222', blue: '#3A6B5A', white: '#FFFDD0', gold: '#B9803C', yellow: '#EFC93F', red: '#C0392B', green: '#A6D48A', silver: '#bbb', null: '#E3B278' };
   const params = new URLSearchParams(location.search); const sim = params.get('sim');
-  let me = null, raw = null, recent = [], started = false, holeIdx = 0, teeIdx = 0, framed = false, showCard = false;
+  let me = null, raw = null, recent = [], started = false, holeIdx = 0, teeIdx = 0, framed = false, showCard = false, target = null;
   const players = [{ n: 'ogbum', me: true }, { n: 'Chop' }, { n: 'TrevorGill' }, { n: 'Mike', guest: true }];
   const scores = players.map(() => Array(18).fill(null));
   try { const s = JSON.parse(localStorage.getItem('pcc-scores') || 'null'); if (s && s.length === 4) s.forEach((r, i) => scores[i] = r); } catch (_) {}
@@ -186,24 +188,39 @@
     for (let k = 0; k < 4; k++) drop('tee' + k);
     h.tees.forEach((x, k) => upsert('tee' + k, ll(x.center), { icon: L.divIcon({ className: '', html: `<div class="teelab" style="background:${TEE_COLORS[x.color] || TEE_COLORS.null}"></div>`, iconSize: [0, 0], iconAnchor: [0, 0] }) }));
     if (!L_.line) L_.line = L.polyline(h.line.map(p => [p.lat, p.lon]), { color: 'rgba(243,239,199,.55)', weight: 1.5, dashArray: '2 8', interactive: false }).addTo(map); else L_.line.setLatLngs(h.line.map(p => [p.lat, p.lon]));
-    framed = false; redraw();
+    framed = false; target = null; redraw();
   }
   function redraw() {
     const h = H[holeIdx]; const g = ll(h.green.center);
     if (me) {
       const p = L.latLng(me.lat, me.lng);
       upsert('ring', p, { icon: icon('me-ring', 64) }); upsert('me', p, { icon: icon('me-dot', 18) });
-      if (!L_.ray) L_.ray = L.polyline([p, g], { color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([p, g]);
       const d = p.distanceTo(g), df = p.distanceTo(ll(h.green.front)), db = p.distanceTo(ll(h.green.back));
-      label('glab', L.latLng((p.lat + g.lat) / 2, (p.lng + g.lng) / 2), fmt(d), 'to the middle');
+      if (target) {
+        // you → target → green: two legs, two numbers
+        if (!L_.ray) L_.ray = L.polyline([p, target, g], { color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([p, target, g]);
+        upsert('tgt', target, { icon: icon('tgt', 22) });
+        const d1 = p.distanceTo(target), d2 = target.distanceTo(g);
+        label('glab', L.latLng((p.lat + target.lat) / 2, (p.lng + target.lng) / 2), fmt(d1), 'to the target');
+        label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(d2), 'in from there');
+        L_.tlab.getElement() && L_.tlab.getElement().firstElementChild.classList.add('sm');
+      } else {
+        if (!L_.ray) L_.ray = L.polyline([p, g], { color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([p, g]);
+        drop('tgt'); drop('tlab');
+        label('glab', L.latLng((p.lat + g.lat) / 2, (p.lng + g.lng) / 2), fmt(d), 'to the middle');
+      }
       $('big').textContent = fmt(d);
       const rise = h.green.elev !== null && me.elevUSGS != null ? h.green.elev - me.elevUSGS : null;
       $('biglbl').textContent = rise === null ? 'to the middle' : `to the middle · plays ${Math.round(d / M_PER_YD + rise / 3)}`;
       $('fb').innerHTML = `<b>${fmt(df)}</b> front<br><b>${fmt(db)}</b> back`;
-      $('fmb').innerHTML = `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
+      $('fmb').innerHTML = target
+        ? `<span><small>target</small> <b>${fmt(p.distanceTo(target))}</b></span><span><small>in</small> ${fmt(target.distanceTo(g))}</span><span><small>F</small> ${fmt(df)} · <small>B</small> ${fmt(db)}</span>`
+        : `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
       const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} yd`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
       if (!framed) frame(); else { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
-    } else { if (!framed) frame(); const t = ll(teeOf(h).center); $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
+    } else { if (!framed) frame(); const t = ll(teeOf(h).center);
+      if (target) { if (!L_.ray) L_.ray = L.polyline([t, target, g], { color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([t, target, g]); upsert('tgt', target, { icon: icon('tgt', 22) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'in from there'); }
+      else { if (L_.ray) L_.ray.setLatLngs([t, g]); drop('tgt'); drop('tlab'); drop('glab'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
     drawCard();
   }
   function drawCard() {
@@ -223,7 +240,11 @@
   $('card').addEventListener('click', e => { const b = e.target.closest('button'); if (b) openSheet(Number(b.dataset.p)); });
   $('scorebtn2').addEventListener('click', () => { $('card').hidden = true; openSheet(0); });
   $('cardbtn2').addEventListener('click', () => { const open = $('card').hidden; $('card').hidden = !open; showCard = open; $('cardbtn2').textContent = open ? 'Close' : 'Card'; drawCard(); });
-  map.on('click', () => { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; });
+  map.on('click', e => {
+    if (!$('card').hidden) { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; return; }
+    if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) target = null; else target = e.latlng;
+    redraw();
+  });
   $('prev').addEventListener('click', () => { holeIdx = (holeIdx + 17) % 18; drawHole(); });
   $('next').addEventListener('click', () => { holeIdx = (holeIdx + 1) % 18; drawHole(); });
   map.on('dragstart', () => { framed = true; }); // your drag holds until you leave the screen
