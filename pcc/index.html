@@ -6,10 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Golf · Pueblo Country Club</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700&family=Sansita:wght@700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700&family=Sansita:wght@700&family=Architects+Daughter&display=swap">
 <style>
   :root { --cream:#FFFDD0; --pine:#184027; --teal:#3A6B5A; --tan:#E3B278; --card:rgb(248,200,158); --putt:#A6D48A; --red:#C0392B; --brown:#5B3D17;
-    --brand:'Sansita','Trebuchet MS',sans-serif; --body:'Nunito Sans','Segoe UI',system-ui,sans-serif; --num:'Bebas Neue','Arial Narrow',Impact,sans-serif;
+    --brand:'Sansita','Trebuchet MS',sans-serif; --body:'Nunito Sans','Segoe UI',system-ui,sans-serif; --num:'Bebas Neue','Arial Narrow',Impact,sans-serif; --hand:'Architects Daughter','Segoe Print',cursive;
     --champagne: linear-gradient(135deg, rgba(240,216,170,.95), rgba(222,184,128,.92)); }
   html, body { height: 100%; margin: 0; }
   body { background: var(--pine); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.4; overflow: hidden; -webkit-user-select: none; user-select: none; }
@@ -29,20 +29,20 @@
   #map.sketch { background-color: #F7F1DC; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='table' tableValues='0 .24'/></feComponentTransfer></filter><rect width='240' height='240' fill='%23F6EFD8'/><rect width='240' height='240' filter='url(%23g)'/></svg>"); }
   #map.sketch::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 400; background: radial-gradient(ellipse at 50% 45%, rgba(60,60,52,0) 55%, rgba(60,60,52,.16) 100%); }
   #map.sketch .leaflet-tile-pane { display: none; }
-  #map.sketch path.sk-tone { fill: none; stroke: #3C3C38; stroke-width: 11; opacity: .22; filter: url(#skblur); }
+  #map.sketch path.sk-tone { fill: none; stroke: #2B2B27; stroke-width: 11; opacity: .26; filter: url(#skblur); }
   #map.sketch path.sk-rough, #map.sketch path.sk-fw, #map.sketch path.sk-water, #map.sketch path.sk-sand, #map.sketch path.sk-green, #map.sketch path.sk-contour, #map.sketch path.sk-line { filter: url(#skPencil); stroke-linecap: round; }
-  #map.sketch path.sk-pass2 { fill: none; stroke: #4A4A44; stroke-width: .9; opacity: .55; stroke-linejoin: round; stroke-linecap: round; filter: url(#skPencil2); }
+  #map.sketch path.sk-pass2 { fill: none; stroke: #2B2B27; stroke-width: 1; opacity: .6; stroke-linejoin: round; stroke-linecap: round; filter: url(#skPencil2); }
   #map.sketch path.sk-pass2.heavy { stroke-width: 1.3; opacity: .7; }
-  #map.sketch path.sk-rough { fill: url(#skRough); stroke: #34342F; stroke-width: 1.5; stroke-linejoin: round; opacity: .92; }
-  #map.sketch path.sk-fw { fill: url(#skFw); stroke: #34342F; stroke-width: 1.2; stroke-linejoin: round; opacity: .85; }
-  #map.sketch path.sk-water { fill: url(#skWater); stroke: #34342F; stroke-width: 1.4; stroke-linejoin: round; }
-  #map.sketch path.sk-sand { fill: url(#skSand); stroke: #34342F; stroke-width: 1.2; stroke-linejoin: round; }
+  #map.sketch path.sk-rough { fill: url(#skRough); stroke: #2B2B27; stroke-width: 1.8; stroke-linejoin: round; opacity: .95; }
+  #map.sketch path.sk-fw { fill: url(#skFw); stroke: #2B2B27; stroke-width: 1.2; stroke-linejoin: round; opacity: .85; }
+  #map.sketch path.sk-water { fill: url(#skWater); stroke: #2B2B27; stroke-width: 1.4; stroke-linejoin: round; }
+  #map.sketch path.sk-sand { fill: url(#skSand); stroke: #2B2B27; stroke-width: 1.2; stroke-linejoin: round; }
   #map.sketch path.sk-sandshadow { fill: #3C3C38; stroke: none; opacity: .22; filter: url(#skblur2); }
-  #map.sketch path.sk-green { fill: url(#skGreen); stroke: #34342F; stroke-width: 2.2; stroke-linejoin: round; }
+  #map.sketch path.sk-green { fill: url(#skGreen); stroke: #2B2B27; stroke-width: 2.2; stroke-linejoin: round; }
   #map.sketch path.sk-greentone { fill: url(#skEdge); stroke: none; }
   #map.sketch path.sk-rough2 { stroke: none; }
-  #map.sketch path.sk-contour { fill: none; stroke: #34342F; stroke-width: .8; stroke-dasharray: 1.5 3.5; stroke-linecap: round; opacity: .5; }
-  #map.sketch path.sk-line { fill: none; stroke: #34342F; stroke-width: 1; stroke-dasharray: 2 6; stroke-linecap: round; opacity: .55; }
+  #map.sketch path.sk-contour { fill: none; stroke: #2B2B27; stroke-width: .8; stroke-dasharray: 1.5 3.5; stroke-linecap: round; opacity: .5; }
+  #map.sketch path.sk-line { fill: none; stroke: #2B2B27; stroke-width: 1; stroke-dasharray: 2 6; stroke-linecap: round; opacity: .55; }
   #map.sketch .leaflet-control-attribution { color: rgba(52,52,47,.6); }
   #map.sketch .me-dot { background: var(--pine); border-color: #F7F1DC; }
   #map.sketch .me-ring { border-color: var(--pine); }
@@ -59,11 +59,19 @@
   .me-dot { width: 18px; height: 18px; border-radius: 300px; background: var(--pine); border: 3px solid var(--cream); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
   .me-ring { width: 64px; height: 64px; border-radius: 300px; border: 2.5px solid var(--pine); box-shadow: 0 0 0 1px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25); }
   .flag { width: 30px; height: 30px; border-radius: 300px; background: var(--red); border: 3px solid var(--cream); box-shadow: 0 2px 6px rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
-  #map.sketch .leaflet-overlay-pane path.ray { stroke: #184027; }
-  .ylab { position: absolute; transform: translate(-50%, -50%); font-family: var(--num); font-size: 30px; line-height: 1; color: var(--cream); background: rgba(24,64,39,.94); border: 1.5px solid rgba(243,239,199,.35); border-radius: 12px; padding: 6px 11px 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align: center; }
+  #map.sketch .leaflet-overlay-pane path.ray { stroke: #2B2B27; stroke-width: 2.2; filter: url(#skPencil); stroke-linecap: round; }
+  #map.sketch .leaflet-overlay-pane path.ray.second { stroke-width: 1.6; opacity: .75; stroke-dasharray: 7 5; }
+  .ylab { position: absolute; transform: translate(18px, -50%); font-family: var(--num); font-size: 30px; line-height: 1; color: var(--cream); background: rgba(24,64,39,.94); border: 1.5px solid rgba(243,239,199,.35); border-radius: 12px; padding: 6px 11px 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align: center; }
   .ylab small { display: block; font-size: 10px; letter-spacing: 1px; color: rgba(243,239,199,.75); margin-top: 2px; }
+  #map.sketch .ylab { font-family: var(--hand); font-size: 26px; color: #2B2B27; background: #F7F1DC; border: 1.6px solid #2B2B27; border-radius: 9px 12px 8px 13px / 12px 8px 13px 9px; padding: 5px 12px 4px; box-shadow: 1.5px 2px 0 rgba(43,43,39,.16); transform: translate(18px, -50%) rotate(-1.6deg); }
+  #map.sketch .ylab small { font-family: var(--hand); font-size: 11px; letter-spacing: 0; text-transform: none; color: #55554F; margin-top: 0; }
+  #map.sketch .ylab::before { content: ''; position: absolute; left: -18px; top: 50%; width: 16px; height: 0; border-top: 1.4px dashed #2B2B27; opacity: .7; }
   .tgt { width: 22px; height: 22px; border-radius: 300px; border: 2.5px solid var(--pine); background: rgba(255,253,208,.6); box-shadow: 0 1px 4px rgba(0,0,0,.45); }
   .ylab.sm { font-size: 22px; padding: 5px 10px 4px; }
+  .xmark { width: 22px; height: 22px; }
+  .xmark svg { display: block; } .xmark path { stroke: var(--cream); stroke-width: 2.6; stroke-linecap: round; fill: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+  #map.sketch .xmark path { stroke: #2B2B27; filter: none; }
+  .stick svg { display: block; } .stick .hole { fill: #2B2B27; } .stick .pole { stroke: #2B2B27; stroke-width: 1.5; } .stick .pennant { fill: #7A2E2E; }
   .teelab { position: absolute; transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 3px; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
   .chip { display: none; position: absolute; top: 12px; right: 12px; z-index: 500; font-family: var(--num); font-size: 13px; letter-spacing: .6px; padding: 5px 11px; border-radius: 300px; background: rgba(24,64,39,.78); border: 1px solid rgba(243,239,199,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .chip.good { background: var(--putt); color: var(--pine); border-color: transparent; }
@@ -245,6 +253,7 @@
     P(scaled(g, 1.45), 'sk-contour'); P(scaled(g, 1.22), 'sk-contour');
     P(g, 'sk-green'); P(g, 'sk-greentone'); P(g, 'sk-pass2 heavy');
     add(L.polyline(h.line.map(p => [p.lat, p.lon]), { className: 'sk-line', interactive: false }));
+    for (const k of ['ray', 'ray2']) if (L_[k]) L_[k].bringToFront();
   }
   // patterns and filters live inside Leaflet's own SVG; each filter is bounded to its
   // own shape, which is what keeps iPhone Safari drawing them
@@ -252,12 +261,12 @@
     const svg = map.getPane('overlayPane').querySelector('svg'); if (!svg || svg.querySelector('#skFw')) return;
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     defs.innerHTML = [
-      '<pattern id="skRough" width="13" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><rect width="13" height="40" fill="#F0E9CF"/><line x1="2" y1="0" x2="2" y2="40" stroke="#4A4A46" stroke-width=".7" opacity=".2" stroke-dasharray="11 3 7 5 14 2"/><line x1="8.5" y1="6" x2="8.5" y2="40" stroke="#4A4A46" stroke-width=".55" opacity=".14" stroke-dasharray="6 4 12 3"/></pattern>',
-      '<pattern id="skRough2" width="17" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(52)"><line x1="4" y1="0" x2="4" y2="46" stroke="#4A4A46" stroke-width=".55" opacity=".1" stroke-dasharray="9 6 15 4 5 7"/></pattern>',
-      '<pattern id="skFw" width="8" height="34" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="8" height="34" fill="#F7F1DC"/><line x1="1.5" y1="0" x2="1.5" y2="34" stroke="#4A4A46" stroke-width=".6" opacity=".22" stroke-dasharray="9 2 13 3 6 4"/><line x1="5.5" y1="4" x2="5.5" y2="34" stroke="#4A4A46" stroke-width=".5" opacity=".16" stroke-dasharray="5 3 10 2"/></pattern>',
-      '<pattern id="skGreen" width="4.2" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(42)"><rect width="4.2" height="22" fill="#F7F1DC"/><line x1="1" y1="0" x2="1" y2="22" stroke="#3C3C38" stroke-width=".6" opacity=".5" stroke-dasharray="7 1.5 9 2"/><line x1="3.1" y1="3" x2="3.1" y2="22" stroke="#3C3C38" stroke-width=".5" opacity=".36" stroke-dasharray="5 2 8 1.5"/></pattern>',
-      '<pattern id="skSand" width="4.4" height="4.4" patternUnits="userSpaceOnUse"><rect width="4.4" height="4.4" fill="#F9F2DC"/><circle cx="1.1" cy="1.3" r=".55" fill="#4A4A46" opacity=".5"/><circle cx="3.3" cy="3.4" r=".45" fill="#4A4A46" opacity=".4"/></pattern>',
-      '<pattern id="skWater" width="12" height="4.6" patternUnits="userSpaceOnUse"><rect width="12" height="4.6" fill="#F3EEDB"/><line x1="0" y1="2.3" x2="12" y2="2.3" stroke="#3C3C38" stroke-width=".6" opacity=".5"/></pattern>',
+      '<pattern id="skRough" width="13" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><rect width="13" height="40" fill="#F0E9CF"/><line x1="2" y1="0" x2="2" y2="40" stroke="#2B2B27" stroke-width=".8" opacity=".3" stroke-dasharray="11 3 7 5 14 2"/><line x1="8.5" y1="6" x2="8.5" y2="40" stroke="#2B2B27" stroke-width=".6" opacity=".2" stroke-dasharray="6 4 12 3"/></pattern>',
+      '<pattern id="skRough2" width="17" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(52)"><line x1="4" y1="0" x2="4" y2="46" stroke="#2B2B27" stroke-width=".6" opacity=".16" stroke-dasharray="9 6 15 4 5 7"/></pattern>',
+      '<pattern id="skFw" width="8" height="34" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="8" height="34" fill="#F7F1DC"/><line x1="1.5" y1="0" x2="1.5" y2="34" stroke="#2B2B27" stroke-width=".7" opacity=".32" stroke-dasharray="9 2 13 3 6 4"/><line x1="5.5" y1="4" x2="5.5" y2="34" stroke="#2B2B27" stroke-width=".55" opacity=".22" stroke-dasharray="5 3 10 2"/></pattern>',
+      '<pattern id="skGreen" width="4.2" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(42)"><rect width="4.2" height="22" fill="#F7F1DC"/><line x1="1" y1="0" x2="1" y2="22" stroke="#2B2B27" stroke-width=".65" opacity=".6" stroke-dasharray="7 1.5 9 2"/><line x1="3.1" y1="3" x2="3.1" y2="22" stroke="#2B2B27" stroke-width=".55" opacity=".45" stroke-dasharray="5 2 8 1.5"/></pattern>',
+      '<pattern id="skSand" width="4.4" height="4.4" patternUnits="userSpaceOnUse"><rect width="4.4" height="4.4" fill="#F9F2DC"/><circle cx="1.1" cy="1.3" r=".55" fill="#2B2B27" opacity=".6"/><circle cx="3.3" cy="3.4" r=".45" fill="#2B2B27" opacity=".5"/></pattern>',
+      '<pattern id="skWater" width="12" height="4.6" patternUnits="userSpaceOnUse"><rect width="12" height="4.6" fill="#F3EEDB"/><line x1="0" y1="2.3" x2="12" y2="2.3" stroke="#2B2B27" stroke-width=".65" opacity=".6"/></pattern>',
       '<radialGradient id="skEdge" cx=".5" cy=".5" r=".62"><stop offset=".55" stop-color="#3C3C38" stop-opacity="0"/><stop offset="1" stop-color="#3C3C38" stop-opacity=".22"/></radialGradient>',
       '<filter id="skblur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="4"/></filter>',
       '<filter id="skPencil" x="-6%" y="-6%" width="112%" height="112%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" result="d"/><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2 -.25" result="ta"/><feComposite in="d" in2="ta" operator="in"/></filter>',
@@ -270,6 +279,16 @@
   document.getElementById('lookSketch').addEventListener('click', () => setLook('sketch'));
   document.getElementById('lookSat').addEventListener('click', () => setLook('sat'));
   const icon = (cls, size, html) => L.divIcon({ className: '', html: html || `<div class="${cls}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+  const xSvg = '<div class="xmark"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M5 5 L17 17 M17 5 L5 17"/></svg></div>';
+  const stickSvg = '<div class="stick"><svg width="26" height="34" viewBox="0 0 26 34"><path class="pole" d="M8 31 V5"/><path class="pennant" d="M8 5 L22 9.5 L8 14 Z"/><circle class="hole" cx="8" cy="31" r="2.4"/></svg></div>';
+  // a shot's flight: a gentle bow to the left of the line, sampled into points
+  function arc(a, b, bow) {
+    const kx = 111320 * Math.cos(a.lat * Math.PI / 180), ky = 111320;
+    const dx = (b.lng - a.lng) * kx, dy = (b.lat - a.lat) * ky, L2 = Math.hypot(dx, dy) || 1;
+    const cx = dx / 2 - dy / L2 * bow * L2, cy = dy / 2 + dx / L2 * bow * L2; // control point, offset perpendicular
+    const out = []; for (let i = 0; i <= 24; i++) { const t = i / 24; const x = (1 - t) * (1 - t) * 0 + 2 * (1 - t) * t * cx + t * t * dx, y = 2 * (1 - t) * t * cy + t * t * dy; out.push([a.lat + y / ky, a.lng + x / kx]); }
+    return out;
+  }
   const flagSvg = '<div class="flag"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M4 15V1.5" stroke="#FFFDD0" stroke-width="2" stroke-linecap="round"/><path d="M5 2h7l-2 3 2 3H5z" fill="#FFFDD0"/></svg></div>';
   const L_ = {};
   const upsert = (key, latlng, opts) => { if (L_[key]) L_[key].setLatLng(latlng); else L_[key] = L.marker(latlng, Object.assign({ interactive: false }, opts)).addTo(map); return L_[key]; };
@@ -288,10 +307,10 @@
     const ref = t; // the whole hole: tee at the bottom, green at the top
     map.setBearing(-bearing(ref, g));
     const d = Math.max(ref.distanceTo(g), 80);
-    const hgt = map.getSize().y; const mpp = d / (hgt * 0.70);
+    const hgt = map.getSize().y; const mpp = d / (hgt * 0.66);
     const z = Math.min(19, Math.max(15, Math.log2(156543.03 * Math.cos(g.lat * Math.PI / 180) / mpp)));
     const mppZ = 156543.03 * Math.cos(g.lat * Math.PI / 180) / Math.pow(2, z);
-    const back = (0.5 - 0.12) * hgt * mppZ; const rad = (bearing(ref, g) + 180) * Math.PI / 180;
+    const back = (0.5 - 0.16) * hgt * mppZ; const rad = (bearing(ref, g) + 180) * Math.PI / 180;
     const c = L.latLng(g.lat + Math.cos(rad) * back / 111320, g.lng + Math.sin(rad) * back / (111320 * Math.cos(g.lat * Math.PI / 180)));
     map.setView(c, z, { animate: started }); framed = true;
   }
@@ -300,11 +319,11 @@
     $('pillt').textContent = `${h.hole} · Par ${h.par} · ${t.yds}`;
     const rise = h.green.elev !== null && t.elev !== null ? Math.round(h.green.elev - t.elev) : null;
     $('sub').innerHTML = `<span>green <b>${h.green.depthYds || '—'}</b> deep</span><span>${rise === null ? '' : (rise > 0 ? '<b>+' + rise + '</b> ft uphill' : rise < 0 ? '<b>' + rise + '</b> ft downhill' : 'flat')}</span><span>${h.handicap ? 'hcp <b>' + h.handicap + '</b>' : ''}</span>`;
-    upsert('flag', ll(h.green.center), { icon: icon('flag', 30, flagSvg) });
+    drop('flag'); if (look === 'sketch') upsert('flag', ll(h.green.center), { icon: L.divIcon({ className: '', html: stickSvg, iconSize: [26, 34], iconAnchor: [8, 31] }) }); else upsert('flag', ll(h.green.center), { icon: icon('flag', 30, flagSvg) });
     for (let k = 0; k < 4; k++) drop('tee' + k);
     h.tees.forEach((x, k) => upsert('tee' + k, ll(x.center), { icon: L.divIcon({ className: '', html: `<div class="teelab" style="background:${TEE_COLORS[x.color] || TEE_COLORS.null}"></div>`, iconSize: [0, 0], iconAnchor: [0, 0] }) }));
     if (!L_.line) L_.line = L.polyline(h.line.map(p => [p.lat, p.lon]), { color: 'rgba(243,239,199,.55)', weight: 1.5, dashArray: '2 8', interactive: false }).addTo(map); else L_.line.setLatLngs(h.line.map(p => [p.lat, p.lon]));
-    framed = false; target = null; redraw();
+    framed = false; target = null; drop('ray2'); redraw();
   }
   const onHole = (p, h) => distToLine({ lat: p.lat, lon: p.lng }, h.line) < 90;
   function redraw() {
@@ -316,16 +335,17 @@
       const d = p.distanceTo(g), df = p.distanceTo(ll(h.green.front)), db = p.distanceTo(ll(h.green.back));
       if (target) {
         // you → target → green: two legs, two numbers
-        if (!L_.ray) L_.ray = L.polyline([p, target, g], { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([p, target, g]);
-        upsert('tgt', target, { icon: icon('tgt', 22) });
+        if (!L_.ray) L_.ray = L.polyline(arc(p, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs(arc(p, target, .07));
+        if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06));
+        upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) });
         const d1 = p.distanceTo(target), d2 = target.distanceTo(g);
-        label('glab', L.latLng((p.lat + target.lat) / 2, (p.lng + target.lng) / 2), fmt(d1), 'to the target');
-        label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(d2), 'in from there');
+        label('glab', L.latLng(...arc(p, target, .07)[12]), fmt(d1), 'to the target');
+        label('tlab', L.latLng(...arc(target, g, .06)[12]), fmt(d2), 'in from there');
         L_.tlab.getElement() && L_.tlab.getElement().firstElementChild.classList.add('sm');
       } else {
-        if (!L_.ray) L_.ray = L.polyline([p, g], { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([p, g]);
-        drop('tgt'); drop('tlab');
-        label('glab', L.latLng((p.lat + g.lat) / 2, (p.lng + g.lng) / 2), fmt(d), 'to the middle');
+        if (!L_.ray) L_.ray = L.polyline(arc(p, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs(arc(p, g, .045));
+        drop('ray2'); drop('tgt'); drop('tlab');
+        label('glab', L.latLng(...arc(p, g, .045)[12]), fmt(d), 'to the middle');
       }
       $('big').textContent = fmt(d);
       const rise = h.green.elev !== null && me.elevUSGS != null ? h.green.elev - me.elevUSGS : null;
@@ -336,9 +356,9 @@
         : `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
       const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} yd`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
       if (!framed) frame(); else { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
-    } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: icon('tgt', 22) });
-      if (target) { if (!L_.ray) L_.ray = L.polyline([t, target, g], { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([t, target, g]); upsert('tgt', target, { icon: icon('tgt', 22) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'in from there'); }
-      else { if (!L_.ray) L_.ray = L.polyline([t, g], { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs([t, g]); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
+    } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: L.divIcon({ className: '', html: '<div class="teelab" style="background:#E3B278;position:static;transform:none"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) });
+      if (target) { if (!L_.ray) L_.ray = L.polyline(arc(t, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs(arc(t, target, .07)); if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06)); upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'in from there'); }
+      else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
     drawCard();
   }
   function drawCard() {
