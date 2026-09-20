@@ -472,6 +472,13 @@
     if (!L_.line) L_.line = L.polyline(h.line.map(p => [p.lat, p.lon]), { color: 'rgba(243,239,199,.55)', weight: 1.5, dashArray: '2 8', interactive: false }).addTo(map); else L_.line.setLatLngs(h.line.map(p => [p.lat, p.lon]));
     framed = false; target = null; drop('ray2'); redraw();
   }
+  function frontBack(from, h) {
+    const g = h.green.center; const kx = 111320 * Math.cos(from.lat * Math.PI / 180), ky = 111320;
+    const T = { x: (g.lon - from.lng) * kx, y: (g.lat - from.lat) * ky }; const L2 = Math.hypot(T.x, T.y) || 1; const ux = T.x / L2, uy = T.y / L2; const hits = [];
+    const r = h.green.ring; for (let i = 0; i < r.length; i++) { const a = { x: (r[i].lon - from.lng) * kx, y: (r[i].lat - from.lat) * ky }, b = { x: (r[(i + 1) % r.length].lon - from.lng) * kx, y: (r[(i + 1) % r.length].lat - from.lat) * ky }; const dx = b.x - a.x, dy = b.y - a.y; const den = ux * dy - uy * dx; if (Math.abs(den) < 1e-9) continue; const t = (a.x * dy - a.y * dx) / den, u = (a.x * uy - a.y * ux) / den; if (u >= 0 && u <= 1 && t > 0) hits.push(t); }
+    hits.sort((a, b) => a - b); const mid = L2;
+    return hits.length >= 2 ? { front: hits[0], back: hits[hits.length - 1] } : { front: Math.max(0, mid - 12 * M_PER_YD), back: mid + 12 * M_PER_YD };
+  }
   const onHole = (p, h) => distToLine({ lat: p.lat, lon: p.lng }, h.line) < 90;
   function redraw() {
     const h = H[holeIdx]; const g = ll(h.green.center);
@@ -479,7 +486,7 @@
       drop('origin');
       const p = L.latLng(me.lat, me.lng);
       upsert('ring', p, { icon: icon('me-ring', 64) }); upsert('me', p, { icon: icon('me-dot', 18) });
-      const d = p.distanceTo(g), df = p.distanceTo(ll(h.green.front)), db = p.distanceTo(ll(h.green.back));
+      const d = p.distanceTo(g); const fb0 = frontBack(p, h); const df = fb0.front, db = fb0.back;
       if (target) {
         // you → target → green: two legs, two numbers
         if (!L_.ray) L_.ray = L.polyline(arc(p, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(p, target, .07));
@@ -506,7 +513,7 @@
       drawOthers(); drawRail();
     } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: L.divIcon({ className: '', html: '<div class="teelab" style="background:#E3B278;position:static;transform:none"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) });
       if (target) { if (!L_.ray) L_.ray = L.polyline(arc(t, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, target, .07)); if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06)); upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'approach'); }
-      else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; $('fmb').innerHTML = `<span><small>F</small> ${fmt(t.distanceTo(ll(h.green.front)))}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(t.distanceTo(ll(h.green.back)))}</span>`; }
+      else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; { const fbt = frontBack(t, h); $('fmb').innerHTML = `<span><small>F</small> ${fmt(fbt.front)}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(fbt.back)}</span>`; } }
     drawCard();
   }
   function drawCard() {
