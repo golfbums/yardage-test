@@ -149,7 +149,7 @@
   .row .tot { text-align: center; font-family: var(--num); font-size: 17px; color: var(--brown); }
   .cardwrap { display: grid; grid-template-columns: 84px minmax(0, 1fr); }
   .names .row { grid-template-columns: 1fr !important; }
-  .nines { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .nines { overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .nines::-webkit-scrollbar { display: none; }
   .track { display: flex; width: 200%; }
   .page { flex: 0 0 50%; scroll-snap-align: start; }
@@ -162,13 +162,14 @@
   .card .row.h .tot { text-transform: uppercase; font-size: 11px; font-family: var(--body); }
   .row.me { position: relative; } .row.me::before { content: ''; position: absolute; inset: 2px -8px; border: 1.5px solid var(--pine); border-radius: 300px; pointer-events: none; }
   .names .row.me::before { border-radius: 300px 0 0 300px; border-right: 0; right: -4px; }
-  .page .row.me::before { border-radius: 0 300px 300px 0; border-left: 0; left: -4px; right: -6px; }
+  .page .row.me::before { border-radius: 0 300px 300px 0; border-left: 0; left: 0; right: 0; } /* stays inside its page so the other nine never shows its end */
   .cardwrap .names { position: relative; z-index: 1; background: var(--card); }
   .row .now { display: inline-flex; align-items: center; justify-content: center; gap: 0; }
   .row .now button { flex: none; width: 26px; height: 26px; padding: 0; border-radius: 300px; background: var(--pine); color: var(--cream); font-family: var(--num); font-size: 17px; line-height: 1; border: 0; }
   .row .now button.empty { background: transparent; color: rgba(24,64,39,.45); border: 0; font-size: 20px; }
   .page { position: relative; }
-  .colring { position: absolute; border: 1.5px solid var(--pine); border-radius: 300px; pointer-events: none; }
+  .colring { position: absolute; box-sizing: border-box; border: 1.5px solid var(--pine); border-radius: 300px; pointer-events: none; }
+  .page .colring { top: 23px; bottom: 2px; width: calc((100% - 64px) / 9 + 6px); left: calc((100% - 64px) / 9 * var(--k) - 3px); }
   .row .now button.tap { background: transparent; border: 0; color: var(--pine); width: auto; height: auto; }
   .bar { display: none; flex: none; gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)); }
   button { flex: 1 1 0; font: inherit; font-family: var(--num); font-size: 16px; letter-spacing: .8px; text-transform: uppercase; color: var(--cream); background: rgba(243,239,199,.14); border: 1px solid rgba(243,239,199,.22); border-radius: 300px; padding: 12px 0; cursor: pointer; }
@@ -524,22 +525,23 @@
     const cell = (k, c) => c === i ? `<div class="s now">${scores[k][c] === null ? `<button class="empty" data-p="${k}">·</button>` : `<button class="tap" data-p="${k}"><span class="sc ${mark(scores[k][c], H[c].par)}">${scores[k][c]}</span></button>`}</div>` : `<div class="s">${scores[k][c] === null ? '' : `<span class="sc ${mark(scores[k][c], H[c].par)}">${scores[k][c]}</span>`}</div>`;
     const block = (cols, tails) => `<div class="row h"><div>Hole</div>${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>` +
       players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div>${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('');
+    if (!showCard || cardTab !== 'card') delete $('card').dataset.key;
     if (showCard && cardTab === 'outing') { drawOuting(); return; }
     if (showCard && cardTab === 'group') { renderGroup(); return; }
     if (showCard && cardTab === 'course') { renderCourse(); return; }
     if (showCard) {
+      const key = JSON.stringify([i, scores]);
+      if ($('card').dataset.key === key && $('nines')) return; // same card as last time: leave the swipe alone
+      $('card').dataset.key = key;
       const names = `<div class="names"><div class="row h"><div>Hole</div></div>${players.map(pl => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div></div>`).join('')}</div>`;
-      const page = (cols, tails) => `<div class="page"><div class="row h">${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>${players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}">${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('')}</div>`;
+      const page = (cols, tails) => `<div class="page">${cols.includes(i) ? '<div class="colring" style="--k:' + (i % 9) + '"></div>' : ''}<div class="row h">${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>${players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}">${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('')}</div>`;
       $('card').innerHTML = segHtml() + `<div class="cardwrap">${names}<div class="nines" id="nines"><div class="track">${page([...Array(9).keys()], [['out', r => toPar(r, 0, 9)], ['', () => '']])}${page([...Array(9).keys()].map(c => c + 9), [['in', r => toPar(r, 9, 18)], ['tot', r => toPar(r, 0, 18)]])}</div></div></div><div class="dots"><i class="on"></i><i></i></div>`;
       const nines = $('nines'); nines.scrollLeft = i >= 9 ? nines.clientWidth : 0;
-      requestAnimationFrame(() => { const pg = nines.querySelectorAll('.page')[i >= 9 ? 1 : 0]; if (!pg) return; const head = pg.querySelector('.row.h'); const cellH = head.children[i % 9]; const rows = pg.querySelectorAll('.row:not(.h)'); const last = rows[rows.length - 1]; const pr = pg.getBoundingClientRect(), hr = cellH.getBoundingClientRect(), lr = last.getBoundingClientRect(); const ring = document.createElement('div'); ring.className = 'colring'; ring.style.left = (hr.left - pr.left - 3) + 'px'; ring.style.width = (hr.width + 6) + 'px'; ring.style.top = (hr.bottom - pr.top + 2) + 'px'; ring.style.height = (lr.bottom - hr.bottom - 4) + 'px'; pg.appendChild(ring); });
-      nines.addEventListener('scroll', () => { const p = nines.scrollLeft > nines.clientWidth / 2 ? 1 : 0; [...document.querySelectorAll('.dots i')].forEach((d, k) => d.classList.toggle('on', k === p)); }, { passive: true });
+      nines.addEventListener('scroll', () => { if (nines.scrollTop) nines.scrollTop = 0; const p = nines.scrollLeft > nines.clientWidth / 2 ? 1 : 0; [...document.querySelectorAll('.dots i')].forEach((d, k) => d.classList.toggle('on', k === p)); }, { passive: true });
     } else {
       const cols = [Math.max(0, i - 2), Math.max(0, i - 1), i].filter((v, k, arr) => arr.indexOf(v) === k);
       $('card').innerHTML = block(cols, [['thru', r => toPar(r, 0, 18)]]);
       document.querySelectorAll('.card .row').forEach(r => r.style.gridTemplateColumns = `1fr repeat(${cols.length}, 44px) 52px`);
-      $('card').style.position = 'relative';
-      requestAnimationFrame(() => { const head = $('card').querySelector('.row.h'); if (!head) return; const cellH = head.children[1 + cols.indexOf(i)]; const rows = $('card').querySelectorAll('.row:not(.h)'); const last = rows[rows.length - 1]; const pr = $('card').getBoundingClientRect(), hr = cellH.getBoundingClientRect(), lr = last.getBoundingClientRect(); const ring = document.createElement('div'); ring.className = 'colring'; ring.style.left = (hr.left - pr.left - 3) + 'px'; ring.style.width = (hr.width + 6) + 'px'; ring.style.top = (hr.bottom - pr.top + 2) + 'px'; ring.style.height = (lr.bottom - hr.bottom - 4) + 'px'; $('card').appendChild(ring); });
     }
   }
   const segHtml = () => `<div class="seg2"><button data-t="card" class="${cardTab === 'card' ? 'on' : ''}">Our cart</button><button data-t="group" class="${cardTab === 'group' ? 'on' : ''}">Cart ahead</button><button data-t="outing" class="${cardTab === 'outing' ? 'on' : ''}">Outing · 8</button><button data-t="course" class="${cardTab === 'course' ? 'on' : ''}">On course · ${8 + others.length}</button></div>`;
