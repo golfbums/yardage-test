@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Golf · Buffalo Dunes</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700&family=Sansita:wght@700&family=Architects+Daughter&display=swap">
+<style>
+  :root { --cream:#FFFDD0; --pine:#184027; --teal:#3A6B5A; --tan:#E3B278; --card:rgb(248,200,158); --putt:#A6D48A; --red:#C0392B; --brown:#5B3D17;
+    --brand:'Sansita','Trebuchet MS',sans-serif; --body:'Nunito Sans','Segoe UI',system-ui,sans-serif; --num:'Bebas Neue','Arial Narrow',Impact,sans-serif; --hand:'Architects Daughter','Segoe Print',cursive;
+    --champagne: linear-gradient(135deg, rgba(240,216,170,.95), rgba(222,184,128,.92)); }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--pine); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.4; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  [hidden] { display: none !important; }
+  .app { position: relative; height: 100%; display: flex; flex-direction: column; }
+  /* header: the hole pill, the way the prototype's carousel works */
+  .hdr { flex: none; padding: calc(8px + env(safe-area-inset-top, 0px)) 14px 8px; }
+  .pill { display: flex; align-items: center; border-radius: 300px; background: rgba(243,239,199,.14); border: 1px solid rgba(243,239,199,.16); }
+  .pill .arw { padding: 0 16px; font-size: 22px; line-height: 44px; cursor: pointer; }
+  .pill .t { flex: 1; text-align: center; font-family: var(--num); font-size: 20px; letter-spacing: .5px; text-transform: uppercase; line-height: 44px; }
+  .pill .badge { margin-right: 12px; font-family: var(--num); font-size: 12px; padding: 2px 8px; border-radius: 300px; background: #F3EFC7; color: var(--pine); }
+  .sub { display: none; justify-content: center; gap: 14px; font-size: 13px; color: rgba(243,239,199,.8); margin-top: 6px; }
+  .sub b { font-family: var(--num); font-weight: 400; font-size: 15px; color: var(--cream); }
+  .mapwrap { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
+  #map { position: absolute; inset: 0; background: #2E4A34; }
+  /* Sketch: thick cream paper with a grain, drawn in graphite */
+  #map.sketch { background-color: #F7F1DC; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='table' tableValues='0 .24'/></feComponentTransfer></filter><rect width='240' height='240' fill='%23F6EFD8'/><rect width='240' height='240' filter='url(%23g)'/></svg>"); }
+  #map.sketch::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 400; background: radial-gradient(ellipse at 50% 45%, rgba(60,60,52,0) 55%, rgba(60,60,52,.16) 100%); }
+  #map.sketch .leaflet-tile-pane { display: none; }
+  #map.sketch path.sk-tone { fill: none; stroke: #2B2B27; stroke-width: 11; opacity: .26; filter: url(#skblur); }
+  #map.sketch path.sk-rough, #map.sketch path.sk-fw, #map.sketch path.sk-water, #map.sketch path.sk-sand, #map.sketch path.sk-green, #map.sketch path.sk-contour, #map.sketch path.sk-line { filter: url(#skPencil); stroke-linecap: round; }
+  #map.sketch path.big { filter: none; }
+  #map.sketch path.sk-tone.big { display: none; }
+  #map.sketch path.sk-pass2 { fill: none; stroke: #2B2B27; stroke-width: 1; opacity: .6; stroke-linejoin: round; stroke-linecap: round; filter: url(#skPencil2); }
+  #map.sketch path.sk-pass2.heavy { stroke-width: 1.3; opacity: .7; }
+  #map.sketch path.sk-rough { fill: #EDE6CC; stroke: #2B2B27; stroke-width: 1.8; stroke-linejoin: round; opacity: .95; }
+  #map.sketch path.sk-fw { fill: #F7F1DC; stroke: #2B2B27; stroke-width: 1.2; stroke-linejoin: round; opacity: .85; }
+  #map.sketch path.sk-water { fill: url(#skWater); stroke: #2B2B27; stroke-width: 1.4; stroke-linejoin: round; }
+  #map.sketch path.sk-sand { fill: url(#skSand); stroke: #2B2B27; stroke-width: 1.2; stroke-linejoin: round; }
+  #map.sketch path.sk-sandshadow { fill: #3C3C38; stroke: none; opacity: .22; filter: url(#skblur2); }
+  #map.sketch path.sk-green { fill: url(#skGreen); stroke: #2B2B27; stroke-width: 2.2; stroke-linejoin: round; }
+  #map.sketch path.sk-greentone { fill: url(#skEdge); stroke: none; }
+  #map.sketch path.sk-rough2 { display: none; }
+  #map.sketch path.sk-contour { fill: none; stroke: #2B2B27; stroke-width: .8; stroke-dasharray: 1.5 3.5; stroke-linecap: round; opacity: .5; }
+  #map.sketch path.sk-line { fill: none; stroke: #2B2B27; stroke-width: 1; stroke-dasharray: 2 6; stroke-linecap: round; opacity: .55; }
+  #map.sketch .leaflet-control-attribution { color: rgba(52,52,47,.6); }
+  #map.sketch .me-dot { background: var(--pine); border-color: #F7F1DC; }
+  #map.sketch .me-ring { border-color: var(--pine); }
+  #map.sketch .tgt { border-color: var(--pine); background: rgba(247,241,220,.7); }
+  /* Satellite: photo with outlines */
+  #map.sat .me-dot { background: var(--cream); border-color: var(--pine); }
+  #map.sat .me-ring { border-color: var(--cream); }
+  #map.sat .tgt { border-color: var(--cream); background: rgba(24,64,39,.35); }
+  .look { position: absolute; top: 12px; left: 12px; z-index: 500; display: flex; padding: 3px; border-radius: 300px; background: rgba(24,64,39,.85); border: 1px solid rgba(243,239,199,.18); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .look button { flex: none; padding: 6px 12px; font-size: 13px; border: 0; background: transparent; }
+  .look button.on { background: var(--cream); color: var(--pine); }
+  .leaflet-control-attribution { font-size: 9px; background: transparent !important; color: rgba(243,239,199,.6); margin-bottom: 76px !important; }
+  .leaflet-control-zoom { display: none; }
+  .me-dot { width: 18px; height: 18px; border-radius: 300px; background: var(--pine); border: 3px solid var(--cream); box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .me-ring { width: 64px; height: 64px; border-radius: 300px; border: 2.5px solid var(--pine); box-shadow: 0 0 0 1px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.25); }
+  .flag { width: 30px; height: 30px; border-radius: 300px; background: var(--red); border: 3px solid var(--cream); box-shadow: 0 2px 6px rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; }
+  #map.sketch .leaflet-overlay-pane path.ray { stroke: #2B2B27; stroke-width: 2.2; filter: url(#skPencil); stroke-linecap: round; }
+  #map.sketch .leaflet-overlay-pane path.ray.second { stroke-width: 1.6; opacity: .75; stroke-dasharray: 7 5; }
+  .ylab { position: absolute; transform: translate(18px, -50%); font-family: var(--num); font-size: 30px; line-height: 1; color: var(--cream); background: rgba(24,64,39,.94); border: 1.5px solid rgba(243,239,199,.35); border-radius: 12px; padding: 6px 11px 4px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align: center; }
+  .ylab small { display: block; font-size: 10px; letter-spacing: 1px; color: rgba(243,239,199,.75); margin-top: 2px; }
+  #map.sketch .ylab { font-family: var(--hand); font-size: 26px; color: #2B2B27; background: #F7F1DC; border: 1.6px solid #2B2B27; border-radius: 3px 4px 3px 4px / 4px 3px 4px 3px; padding: 6px 12px 5px; box-shadow: 1.5px 2px 0 rgba(43,43,39,.16); transform: translate(18px, -50%) rotate(-1.6deg); }
+  #map.sketch .ylab small { font-family: var(--hand); font-size: 11px; letter-spacing: 0; text-transform: none; color: #55554F; margin-top: 0; }
+  #map.sketch .ylab::before { content: ''; position: absolute; left: -18px; top: 50%; width: 16px; height: 0; border-top: 1.4px dashed #2B2B27; opacity: .7; }
+  .tgt { width: 22px; height: 22px; border-radius: 300px; border: 2.5px solid var(--pine); background: rgba(255,253,208,.6); box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+  .ylab.sm { font-size: 22px; padding: 5px 10px 4px; }
+  .xmark { width: 22px; height: 22px; }
+  .xmark svg { display: block; } .xmark path { stroke: var(--cream); stroke-width: 2.6; stroke-linecap: round; fill: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+  #map.sketch .xmark path { stroke: #2B2B27; filter: none; }
+  .stick svg { display: block; } .stick .hole { fill: #2B2B27; } .stick .pole { stroke: #2B2B27; stroke-width: 1.5; } .stick .pennant { fill: #7A2E2E; }
+  .solo { width: 13px; height: 13px; border-radius: 300px; background: #A6D48A; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .orow .tag { font-size: 10px; letter-spacing: .6px; text-transform: uppercase; color: var(--brown); font-weight: 400; margin-left: 6px; }
+  .orow .n .lg { font-size: 11px; color: var(--brown); font-weight: 400; }
+  #map.sketch path.sk-tee { fill: #F7F1DC; stroke: #2B2B27; stroke-width: 1.2; }
+  #map.sketch path.sk-tee.on { fill: #E3B278; }
+  #map.sat path.sk-tee { fill: rgba(227,178,120,.55); stroke: #FFFDD0; stroke-width: 1.2; }
+  #map.sat path.sk-tee.on { fill: #E3B278; }
+  .pop { position: absolute; left: 14px; right: 14px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 700; background: var(--card); color: var(--pine); border-radius: 18px; padding: 10px 14px 8px; box-shadow: 0 10px 30px rgba(24,64,39,.35); }
+  .pop .t { font-family: var(--num); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--brown); margin-bottom: 4px; }
+  .pop .r { display: flex; justify-content: space-between; align-items: center; height: 30px; font-size: 14px; font-weight: 700; }
+  .pop .r span { font-weight: 400; color: var(--brown); font-size: 12px; }
+  .pop .r b { font-family: var(--num); font-weight: 400; font-size: 17px; }
+  #map.sketch ~ .pop, .mapwrap .pop.sk { background: #F7F1DC; border: 1.5px solid #2B2B27; border-radius: 4px; box-shadow: 1.5px 2px 0 rgba(43,43,39,.16); }
+  .pop.sk .t, .pop.sk .r, .pop.sk .r b { font-family: var(--hand); text-transform: none; letter-spacing: 0; color: #2B2B27; }
+  .rail { position: absolute; left: 10px; top: 64px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: 26px; z-index: 500; display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; pointer-events: none; }
+  .rail .c { width: 24px; height: 24px; border-radius: 300px; border: 1.5px solid rgba(24,64,39,.45); display: flex; align-items: center; justify-content: center; font-family: var(--num); font-size: 12px; line-height: 1; color: rgba(24,64,39,.6); background: rgba(247,241,220,.6); pointer-events: auto; cursor: pointer; }
+  .rail .c.on { background: #E3B278; border-color: var(--pine); color: var(--pine); }
+  .rail .c.me { background: var(--pine); border-color: var(--cream); color: var(--cream); }
+  #map.sketch ~ .rail .c { font-family: var(--hand); font-size: 12px; border-color: rgba(43,43,39,.55); color: rgba(43,43,39,.65); background: #F7F1DC; border-radius: 300px; }
+  #map.sketch ~ .rail .c.on { background: #E3B278; border-color: #2B2B27; color: #2B2B27; }
+  #map.sketch ~ .rail .c.me { background: #2B2B27; border-color: #F7F1DC; color: #F7F1DC; }
+  #map.sat ~ .rail .c { border-color: rgba(243,239,199,.6); color: rgba(243,239,199,.8); background: rgba(24,64,39,.5); }
+  .cart { display: flex; gap: 3px; } .cart i { width: 11px; height: 11px; border-radius: 300px; background: #E3B278; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .cartlab { position: absolute; transform: translate(calc(-100% - 12px), -50%); white-space: nowrap; cursor: pointer; pointer-events: auto; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.9); padding: 4px 9px; border-radius: 300px; }
+  #map.sketch .cartlab { font-family: var(--hand); font-size: 13px; color: #2B2B27; background: #F7F1DC; border: 1.4px solid #2B2B27; border-radius: 3px; }
+  .grp { position: absolute; top: 12px; right: 12px; z-index: 500; cursor: pointer; display: flex; align-items: center; gap: 7px; font-family: var(--num); font-size: 13px; letter-spacing: .5px; color: var(--cream); background: rgba(24,64,39,.85); border: 1px solid rgba(243,239,199,.18); padding: 6px 11px; border-radius: 300px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .grp i { width: 8px; height: 8px; border-radius: 300px; background: #E3B278; }
+  .seg2 { display: flex; gap: 4px; padding: 0 0 8px; }
+  .seg2 button { flex: none; padding: 6px 12px; font-size: 13px; background: rgba(24,64,39,.1); color: var(--pine); border: 0; }
+  .seg2 button.on { background: var(--pine); color: var(--cream); }
+  .orow { display: grid; grid-template-columns: 26px 1fr 44px 44px 40px 40px; align-items: center; height: 36px; font-size: 14px; }
+  .orow .n { line-height: 1.05; }
+  .orow.h { height: 20px; font-size: 11px; color: var(--brown); border-bottom: 1px solid rgba(0,0,0,.14); margin-bottom: 2px; text-transform: uppercase; }
+  .orow .p { font-family: var(--num); font-size: 14px; color: var(--brown); }
+  .orow .n { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .orow .n span { font-weight: 400; color: var(--brown); font-size: 12px; }
+  .orow .v { text-align: center; font-family: var(--num); font-size: 16px; }
+  .orow .v.sk { color: #B8860B; } .orow .v.gr { color: #3A6B5A; }
+  .orow.me { position: relative; } .orow.me::before { content: ''; position: absolute; inset: 2px -8px; border: 1.5px solid var(--pine); border-radius: 300px; pointer-events: none; }
+  .carry { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,.14); font-size: 12px; color: var(--brown); display: flex; justify-content: space-between; }
+  .carry b { color: var(--pine); font-family: var(--num); font-weight: 400; font-size: 14px; }
+  .gline { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,.14); }
+  .gline .k { font-family: var(--num); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--brown); margin-bottom: 6px; }
+  .gline .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .gline .pills button { flex: none; padding: 7px 12px; font-size: 13px; background: rgba(24,64,39,.1); color: var(--pine); border: 0; }
+  .gline .pills button.on { background: #A6D48A; color: var(--pine); } transform: translate(-50%, -50%); width: 14px; height: 14px; border-radius: 3px; border: 2px solid var(--pine); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .chip { display: none; position: absolute; top: 12px; right: 12px; z-index: 500; font-family: var(--num); font-size: 13px; letter-spacing: .6px; padding: 5px 11px; border-radius: 300px; background: rgba(24,64,39,.78); border: 1px solid rgba(243,239,199,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .chip.good { background: var(--putt); color: var(--pine); border-color: transparent; }
+  .chip.ok { background: var(--tan); color: var(--pine); border-color: transparent; }
+  .chip.bad { display: block; background: var(--red); color: var(--cream); border-color: transparent; }
+  .hint { display: none; position: absolute; top: 14px; left: 12px; right: 96px; z-index: 500; font-size: 13px; color: var(--cream); text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; }
+  .yard { position: absolute; left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 500; display: flex; align-items: center; gap: 8px; }
+  .yard .fmb { flex: 1 1 0; display: flex; align-items: baseline; justify-content: center; gap: 12px; padding: 9px 14px; border-radius: 300px; background: rgba(24,64,39,.92); border: 1px solid rgba(243,239,199,.18); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--cream); font-family: var(--num); font-size: 15px; letter-spacing: .4px; white-space: nowrap; }
+  .yard .fmb b { font-weight: 400; font-size: 26px; line-height: 1; }
+  .yard .fmb small { font-size: 11px; letter-spacing: 1px; color: rgba(243,239,199,.7); }
+  .yard .btn { flex: none; padding: 11px 16px; font-size: 14px; background: rgba(24,64,39,.92); border-color: rgba(243,239,199,.18); }
+  .yard .btn.primary { padding: 11px 18px; }
+  .big, .lbl, .fb { display: none; }
+  /* the card strip: uniform rows, one thumb */
+  .card { position: absolute; left: 14px; right: 14px; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); z-index: 800; box-shadow: 0 10px 30px rgba(24,64,39,.45); margin: 0; background: var(--card); color: var(--pine); border-radius: 18px; padding: 8px 12px 8px 14px; }
+  .row { display: grid; grid-template-columns: 1fr 44px 44px 44px 52px; align-items: center; height: 38px; font-size: 14px; }
+  .row.h { height: 20px; font-size: 11px; color: var(--brown); border-bottom: 1px solid rgba(0,0,0,.14); margin-bottom: 2px; }
+  .row .n { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .row .n span { font-weight: 400; color: var(--brown); font-size: 12px; }
+  .row .s { text-align: center; font-family: var(--num); font-size: 17px; display: flex; align-items: center; justify-content: center; }
+  .sc { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-family: var(--hand); font-size: 16px; line-height: 1; color: var(--pine); }
+  .sc.bird::before, .sc.eagle::before, .sc.eagle::after, .sc.bogey::before, .sc.dbl::before, .sc.dbl::after { content: ''; position: absolute; border: 1.5px solid var(--pine); pointer-events: none; }
+  .sc.bird::before, .sc.eagle::before { inset: 2px; border-radius: 300px; }
+  .sc.eagle::after { inset: -2px; border-radius: 300px; }
+  .sc.bogey::before, .sc.dbl::before { inset: 3px; border-radius: 2px; }
+  .sc.dbl::after { inset: -1px; border-radius: 3px; }
+  .sc.snow { color: transparent; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28' fill='none' stroke='%23184027' stroke-width='1.4' stroke-linecap='round'><path d='M9.2 19.4c-1.6 1.2-2.6 3.1-2.4 4.9.3 2.1 3.2 3 7.2 3s6.9-.9 7.2-3c.2-1.8-.8-3.7-2.4-4.9'/><path d='M10.4 12.6c-1.9 1.4-2.3 4.4-.8 6.2 1.3 1.5 7.5 1.5 8.8 0 1.5-1.8 1.1-4.8-.8-6.2'/><path d='M11.2 7.3a3.3 3.3 0 1 1 5.6 0c1.2.9 1.6 2.6.9 3.9-.9 1.6-6.5 1.6-7.4 0-.7-1.3-.3-3 .9-3.9z'/><path d='M7.6 5.8l7.2-1.4M8.9 3l4.9-1' stroke-width='1.2'/><path d='M9 14.8l-3.6-2.4M19 14.8l3.6-2.4' stroke-width='1.2'/><circle cx='12.4' cy='6.9' r='.55' fill='%23184027'/><circle cx='15.6' cy='6.9' r='.55' fill='%23184027'/><path d='M14 8.2l2.6.6-2.6.7z' fill='%23184027' stroke='none'/><circle cx='14' cy='15.2' r='.55' fill='%23184027'/><circle cx='14' cy='17.6' r='.55' fill='%23184027'/><circle cx='14' cy='22.4' r='.55' fill='%23184027'/></svg>") center / 28px 28px no-repeat; }
+  .sc.triple { background-size: 28px 28px !important; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><polygon points='16,2 30,29 2,29' fill='none' stroke='%23184027' stroke-width='2' stroke-linejoin='round'/></svg>") center / 32px 32px no-repeat; padding-top: 6px; }
+  .row .now button { font-family: var(--hand); font-size: 17px; }
+  .row .tot { text-align: center; font-family: var(--num); font-size: 17px; color: var(--brown); }
+  .cardwrap { display: grid; grid-template-columns: 84px minmax(0, 1fr); }
+  .names .row { grid-template-columns: 1fr !important; }
+  .nines { overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .nines::-webkit-scrollbar { display: none; }
+  .track { display: flex; width: 200%; }
+  .track.one .page { flex: 0 0 100%; }
+  .page { flex: 0 0 50%; scroll-snap-align: start; }
+  .page .row { grid-template-columns: repeat(var(--cols, 9), minmax(0, 1fr)) 32px 32px !important; }
+  .page .row .s, .page .row .tot { min-width: 0; overflow: visible; }
+  .dots { display: flex; justify-content: center; gap: 6px; padding-top: 6px; }
+  .dots i { width: 6px; height: 6px; border-radius: 300px; background: rgba(24,64,39,.25); }
+  .dots i.on { background: var(--pine); }
+  .nine { height: 10px; }
+  .card .row.h .tot { text-transform: uppercase; font-size: 11px; font-family: var(--body); }
+  .row.me { position: relative; } .row.me::before { content: ''; position: absolute; inset: 2px -8px; border: 1.5px solid var(--pine); border-radius: 300px; pointer-events: none; }
+  .names .row.me::before { border-radius: 300px 0 0 300px; border-right: 0; right: -4px; }
+  .page .row.me::before { border-radius: 0 300px 300px 0; border-left: 0; left: 0; right: 0; } /* stays inside its page so the other nine never shows its end */
+  .cardwrap .names { position: relative; z-index: 1; background: var(--card); }
+  .row .now { display: inline-flex; align-items: center; justify-content: center; gap: 0; }
+  .row .now button { flex: none; width: 26px; height: 26px; padding: 0; border-radius: 300px; background: var(--pine); color: var(--cream); font-family: var(--num); font-size: 17px; line-height: 1; border: 0; }
+  .row .now button.empty { background: transparent; color: rgba(24,64,39,.45); border: 0; font-size: 20px; }
+  .page { position: relative; }
+  .colring { position: absolute; box-sizing: border-box; border: 1.5px solid var(--pine); border-radius: 300px; pointer-events: none; }
+  .page .colring { top: 23px; bottom: 2px; width: calc((100% - 64px) / var(--cols, 9) + 6px); left: calc((100% - 64px) / var(--cols, 9) * var(--k) - 3px); }
+  .row .now button.tap { background: transparent; border: 0; color: var(--pine); width: auto; height: auto; }
+  .bar { display: none; flex: none; gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  button { flex: 1 1 0; font: inherit; font-family: var(--num); font-size: 16px; letter-spacing: .8px; text-transform: uppercase; color: var(--cream); background: rgba(243,239,199,.14); border: 1px solid rgba(243,239,199,.22); border-radius: 300px; padding: 12px 0; cursor: pointer; }
+  button.primary { background: var(--champagne); color: var(--pine); border-color: transparent; }
+  button:disabled { opacity: .4; }
+  button:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
+  /* score sheet: rises from the bottom like the prototype's pop-ups */
+  .sheet { position: absolute; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 900; border-radius: 22px; padding: 14px 16px 16px; background: rgba(248,200,158,.96); color: var(--pine); box-shadow: 0 10px 30px rgba(24,64,39,.45); }
+  .sheet .ttl { font-family: var(--brand); font-size: 20px; margin-bottom: 8px; }
+  .sheet .nums { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .sheet .nums button { padding: 12px 0; font-size: 20px; background: rgba(24,64,39,.1); color: var(--pine); border: 0; }
+  .sheet .nums button.par { background: transparent; color: var(--pine); box-shadow: inset 0 0 0 2px var(--pine); }
+  .sheet .x { position: absolute; top: 10px; right: 14px; width: auto; flex: none; padding: 4px 10px; font-size: 14px; background: transparent; color: var(--pine); border: 0; }
+  .gate { position: absolute; inset: 0; background: var(--pine); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 14px; z-index: 1000; }
+  .gate p { max-width: 34ch; margin: 0; color: rgba(243,239,199,.85); }
+  .gate .t { font-family: var(--brand); font-size: 30px; letter-spacing: .3px; }
+  .gate .eye { font-family: var(--num); font-size: 14px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--tan); }
+  .gate .tees { display: flex; gap: 8px; }
+  .gate .tees button { flex: none; padding: 10px 18px; }
+  .gate .tees button.on { background: var(--champagne); color: var(--pine); border-color: transparent; }
+  .gate button.primary { flex: none; padding: 14px 34px; }
+  .gate #browse { flex: none; padding: 12px 26px; }
+  .gate .err { color: var(--tan); font-size: 14px; max-width: 36ch; }
+  .gate .fine { font-size: 12px; color: rgba(243,239,199,.6); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="gate" id="gate">
+    <div class="eye">Golf</div>
+    <div class="t">Buffalo Dunes</div>
+    <p id="gatep">Par 71 · 18 holes mapped. One question, then play.</p>
+    <div class="tees" id="teesel"></div>
+    <button class="primary" id="start">Play · allow location</button>
+    <div class="err" id="err"></div>
+    <button id="browse" hidden>Browse from the tees</button>
+    <div class="fine">Outlines © OpenStreetMap contributors · Elevation: USGS · Photo: Esri</div>
+  </div>
+  <div class="hdr">
+    <div class="pill"><span class="arw" id="prev">‹</span><span class="t" id="pillt">—</span><span class="arw" id="next">›</span></div>
+    <div class="sub" id="sub"></div>
+  </div>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="hint" id="hint"></div>
+    <div class="look"><button id="lookSketch" class="on">Sketch</button><button id="lookSat">Satellite</button></div>
+    <div class="grp" id="grp" hidden><i></i><span id="grpt"></span></div>
+    <div class="pop" id="pop" hidden></div>
+    <div class="rail" id="rail"></div>
+    <span class="chip" id="acc">GPS</span>
+    <div class="yard">
+      <div class="fmb" id="fmb"><span><small>F</small> —</span><b id="mid">—</b><span><small>B</small> —</span></div>
+      <button class="btn" id="cardbtn2">Card</button>
+      <button class="btn primary" id="scorebtn2">Score</button>
+    </div>
+    <div hidden><span id="big"></span><span id="biglbl"></span><span id="fb"></span></div>
+    <div class="sheet" id="sheet" hidden>
+      <button class="x" id="sheetx">✕</button>
+      <div class="ttl" id="sheett">Hole 1 · par 4</div>
+      <div class="nums" id="nums"></div>
+      <div class="gline" id="gline" hidden></div>
+    </div>
+  </div>
+  <div class="card" id="card" hidden></div>
+  <div class="bar">
+    <button id="simbtn" hidden>Sim walk</button>
+    <button id="scorebtn">Score this hole</button>
+    <button id="cardbtn">Card</button>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+<script src="course.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const M_PER_YD = 0.9144;
+  const C = window.COURSE; const H = C.holes;
+  const N = H.length;                       // 9 or 18 — everything below follows the data
+  const FRONT = N > 9 ? 9 : N;              // how many holes on the card's first page
+  const PAGES = N > 9 ? 2 : 1;
+  const TEE_COLORS = { black: '#222', blue: '#3A6B5A', white: '#FFFDD0', gold: '#B9803C', yellow: '#EFC93F', red: '#C0392B', green: '#A6D48A', silver: '#bbb', null: '#E3B278' };
+  const params = new URLSearchParams(location.search); const sim = params.get('sim');
+  let me = null, raw = null, recent = [], started = false, holeIdx = 0, teeIdx = 0, framed = false, showCard = false, target = null;
+  const players = [{ n: 'ogbum', me: true }, { n: 'Chop' }, { n: 'TrevorGill' }, { n: 'Mike', guest: true }];
+  const scores = players.map(() => Array(N).fill(null));
+  // the other cart in the outing — their card comes over the air; here it's simulated a hole ahead
+  const cart2 = [{ n: 'JJ' }, { n: 'Dre' }, { n: 'Sully' }, { n: 'Kev' }];
+  const seed = (k, c) => ((k * 7 + c * 13) % 5); // deterministic "random" scores
+  const cart2Scores = cart2.map((_, k) => Array(N).fill(null));
+  function fillCart2() { for (let c = 0; c < N; c++) for (let k = 0; k < 4; k++) cart2Scores[k][c] = (c <= holeIdx) ? H[c].par + [-1, 0, 0, 1, 2][seed(k, c)] : null; }
+  // bums with a live round today who aren't in our outing: hole they're on, scores so far
+  const others = [
+    { n: 'Hank', league: 'bums', ahead: 4, tp: [0, 1, 0, 0, 1, 2, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0] },
+    { n: 'Marcus', league: 'ball washers', ahead: -2, tp: [1, 0, 2, 1, 0, 0, 1, 1, 0, 0, 2, 0, 1, 0, 1, 0, 0, 1] },
+    { n: 'Beau', league: 'ball washers', ahead: -2, tp: [-1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0] },
+    { n: 'Dutch', league: 'bums', ahead: 0, solo: true, tp: [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0] },
+  ];
+  const otherHole = o => Math.max(0, Math.min(17, holeIdx + o.ahead));
+  const otherToPar = o => { const h = otherHole(o); let sum = 0; for (let k = 0; k < h; k++) sum += o.tp[k]; return { thru: h, txt: h ? (sum === 0 ? 'E' : (sum > 0 ? '+' : '') + sum) : '–', s: sum }; };
+  let greenies = {}; try { greenies = JSON.parse(localStorage.getItem('pcc-greenies') || '{}'); } catch (_) {}
+  let cardTab = 'card';
+  try { const s = JSON.parse(localStorage.getItem('pcc-scores') || 'null'); if (s && s.length === 4) s.forEach((r, i) => scores[i] = r); } catch (_) {}
+  const fmt = m => Math.round(m / M_PER_YD);
+  const ll = p => L.latLng(p.lat, p.lon !== undefined ? p.lon : p.lng);
+  const bearing = (a, b) => { const e = (b.lng - a.lng) * Math.cos(a.lat * Math.PI / 180), n = b.lat - a.lat; return (Math.atan2(e, n) * 180 / Math.PI + 360) % 360; };
+
+  // tee sets available on this course: use the most common count of boxes as the sets
+  const teeNames = ['Back', 'Middle', 'Front'];
+  const maxTees = Math.max(...H.map(h => h.tees.length));
+  const teeSets = Array.from({ length: Math.min(3, maxTees) }, (_, i) => i);
+  $('gatep').textContent = `Par ${H.reduce((s, h) => s + (h.par || 0), 0) || '—'} · ${N} holes mapped.` + (C.inferred ? ' Routing inferred from aerial data.' : ' One question, then play.');
+  $('teesel').innerHTML = teeSets.map(i => `<button data-i="${i}" class="${i === 0 ? 'on' : ''}">${teeNames[i]}${(() => { const tot = H.reduce((s, h) => s + ((h.tees[i] || h.tees[h.tees.length - 1]).yds), 0); return ' · ' + tot; })()}</button>`).join('');
+  $('teesel').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; teeIdx = Number(b.dataset.i); [...$('teesel').children].forEach(x => x.classList.toggle('on', x === b)); });
+  const teeOf = h => h.tees[Math.min(teeIdx, h.tees.length - 1)];
+
+  const map = L.map('map', { zoomControl: false, rotate: true, rotateControl: false, touchRotate: false, bearing: 0, tap: false, renderer: L.svg({ padding: 1.6 }) }).setView([C.holes[0].tees[0].center.lat, C.holes[0].tees[0].center.lon], 16);
+  map.attributionControl.setPrefix(false); map.attributionControl.addAttribution('© OpenStreetMap · USGS · Esri');
+  // The hole, drawn like a yardage book: a corridor cut out of the paper, rough inside it,
+  // striped fairway, sand, water, green. Only the hole you're on.
+  const ring = r => r.map(p => [p.lat, p.lon]);
+  const style = { rough: { stroke: false, fill: true, fillColor: '#B7C7A3', fillOpacity: 1, interactive: false }, fw: { color: '#8FAE7C', weight: 1, fill: true, fillColor: 'url(#fwstripes)', fillOpacity: 1, interactive: false }, bk: { color: '#D9BC82', weight: 1, fill: true, fillColor: '#F0D8AA', fillOpacity: 1, interactive: false }, w: { color: '#5E8F86', weight: 1, fill: true, fillColor: '#8FB5AD', fillOpacity: 1, interactive: false }, g: { color: '#FFFDD0', weight: 2.5, fill: true, fillColor: '#A6D48A', fillOpacity: 1, interactive: false } };
+  const distToLine = (p, line) => { let d = 1e9; for (let k = 0; k + 1 < line.length; k++) { const a = line[k], b = line[k + 1]; const kx = 111320 * Math.cos(p.lat * Math.PI / 180); const ax = (p.lon - a.lon) * kx, ay = (p.lat - a.lat) * 111320, bx = (b.lon - a.lon) * kx, by = (b.lat - a.lat) * 111320; const l2 = bx * bx + by * by || 1; let t = (ax * bx + ay * by) / l2; t = Math.max(0, Math.min(1, t)); d = Math.min(d, Math.hypot(ax - bx * t, ay - by * t)); } return d; };
+  // offset a polyline W metres either side, with round caps: a corridor polygon
+  function corridor(line, W) {
+    const o = line[0]; const kx = 111320 * Math.cos(o.lat * Math.PI / 180), ky = 111320;
+    const raw = line.map(p => ({ x: (p.lon - o.lon) * kx, y: (p.lat - o.lat) * ky }));
+    const P = []; for (let i = 0; i + 1 < raw.length; i++) { const a = raw[i], b = raw[i + 1]; const n = Math.max(1, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / 10)); for (let k = 0; k < n; k++) P.push({ x: a.x + (b.x - a.x) * k / n, y: a.y + (b.y - a.y) * k / n }); } P.push(raw[raw.length - 1]);
+    // smooth the densified line a little so the offset edges bend instead of kink
+    for (let pass = 0; pass < 3; pass++) for (let i = 1; i + 1 < P.length; i++) { P[i] = { x: (P[i - 1].x + 2 * P[i].x + P[i + 1].x) / 4, y: (P[i - 1].y + 2 * P[i].y + P[i + 1].y) / 4 }; }
+    const left = [], right = [];
+    for (let i = 0; i < P.length; i++) {
+      const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)]; const dx = b.x - a.x, dy = b.y - a.y, L2 = Math.hypot(dx, dy) || 1; const nx = -dy / L2, ny = dx / L2;
+      left.push({ x: P[i].x + nx * W, y: P[i].y + ny * W }); right.push({ x: P[i].x - nx * W, y: P[i].y - ny * W });
+    }
+    // a semicircle from one side to the other, sweeping AWAY from the hole (not through it)
+    const cap = (c, from, away, steps) => { const mk = sgn => { const out = []; const a0 = Math.atan2(from.y - c.y, from.x - c.x); for (let k = 1; k < steps; k++) { const a = a0 + sgn * Math.PI * k / steps; out.push({ x: c.x + W * Math.cos(a), y: c.y + W * Math.sin(a) }); } return out; }; const A = mk(1), B = mk(-1); const mid = o => o[Math.floor(o.length / 2)]; const d = o => Math.hypot(mid(o).x - away.x, mid(o).y - away.y); return d(A) > d(B) ? A : B; };
+    const endCap = cap(P[P.length - 1], left[left.length - 1], P[P.length - 2], 10), startCap = cap(P[0], right[0], P[1], 10);
+    const poly = [...left, ...endCap, ...right.reverse(), ...startCap];
+    return poly.map(q => [o.lat + q.y / ky, o.lon + q.x / kx]);
+  }
+  const holeLayers = [];
+  const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
+  let look = 'sketch'; try { look = localStorage.getItem('pcc-look') || 'sketch'; } catch (_) {}
+  // a smooth curve through a ring's survey points (Catmull-Rom, 5 steps a segment)
+  function smooth(r, closed = true) {
+    const n = r.length, out = []; const at = i => r[((i % n) + n) % n];
+    const segs = closed ? n : n - 1;
+    for (let i = 0; i < segs; i++) { const p0 = closed ? at(i - 1) : r[Math.max(0, i - 1)], p1 = r[i], p2 = closed ? at(i + 1) : r[Math.min(n - 1, i + 1)], p3 = closed ? at(i + 2) : r[Math.min(n - 1, i + 2)];
+      for (let k = 0; k < 5; k++) { const t = k / 5, t2 = t * t, t3 = t2 * t; out.push({ lat: 0.5 * ((2 * p1.lat) + (-p0.lat + p2.lat) * t + (2 * p0.lat - 5 * p1.lat + 4 * p2.lat - p3.lat) * t2 + (-p0.lat + 3 * p1.lat - 3 * p2.lat + p3.lat) * t3), lon: 0.5 * ((2 * p1.lon) + (-p0.lon + p2.lon) * t + (2 * p0.lon - 5 * p1.lon + 4 * p2.lon - p3.lon) * t2 + (-p0.lon + 3 * p1.lon - 3 * p2.lon + p3.lon) * t3) }); } }
+    if (!closed) out.push(r[n - 1]);
+    return out;
+  }
+  const scaled = (r, k) => { const c = { lat: r.reduce((s, p) => s + p.lat, 0) / r.length, lon: r.reduce((s, p) => s + p.lon, 0) / r.length }; return r.map(p => ({ lat: c.lat + (p.lat - c.lat) * k, lon: c.lon + (p.lon - c.lon) * k })); };
+  const shifted = (r, m) => r.map(p => ({ lat: p.lat - m / 111320, lon: p.lon + m / (111320 * Math.cos(p.lat * Math.PI / 180)) }));
+  function drawCourse(i) {
+    holeLayers.forEach(l => map.removeLayer(l)); holeLayers.length = 0;
+    const h = H[i];
+    const far = Math.max(...[...h.fairways.flat(), ...h.bunkers.flat(), ...h.green.ring, ...h.tees.map(t => t.center)].map(p => distToLine(p, h.line)));
+    const len = h.line.reduce((a, p, k, arr) => k ? a + L.latLng(arr[k - 1].lat, arr[k - 1].lon).distanceTo([p.lat, p.lon]) : 0, 0);
+    const W = Math.max(34, Math.min(95, far + 14, len * 0.28));
+    const add = l => { l.addTo(map); holeLayers.push(l); return l; };
+    const P = (pts, cls, extra) => add(L.polygon(ring(pts), Object.assign({ className: cls, interactive: false, fill: true, fillOpacity: 1, opacity: 1, noClip: true, smoothFactor: 0 }, extra || {})));
+    $('map').className = look; document.getElementById('lookSketch').classList.toggle('on', look === 'sketch'); document.getElementById('lookSat').classList.toggle('on', look === 'sat');
+    h.tees.forEach((x, k) => { if (x.ring) add(L.polygon(ring(x.ring), { className: 'sk-tee' + (k === Math.min(teeIdx, h.tees.length - 1) ? ' on' : ''), interactive: false, noClip: true, smoothFactor: 0, fill: true, fillOpacity: 1, opacity: 1 })); });
+    if (look === 'sat') {
+      const st = { fw: { color: '#FFFDD0', weight: 1.2, opacity: .55, fill: true, fillColor: '#A6D48A', fillOpacity: .10 }, bk: { color: '#F0D8AA', weight: 1.2, fill: true, fillColor: '#F0D8AA', fillOpacity: .35 }, w: { color: '#F3EFC7', weight: 1.2, dashArray: '5 4', fill: true, fillColor: '#3A6B5A', fillOpacity: .25 }, g: { color: '#A6D48A', weight: 3, fill: true, fillColor: '#A6D48A', fillOpacity: .28 } };
+      h.fairways.forEach(r => P(r, '', st.fw)); h.water.forEach(r => P(r, '', st.w)); h.bunkers.forEach(r => P(r, '', st.bk)); P(h.green.ring, '', st.g);
+      return;
+    }
+    sketchDefs();
+    const cor = corridor(h.line, W).map(([lat, lon]) => ({ lat, lon }));
+    // tone under every edge, then the surfaces, then the lines
+    P(cor, 'sk-tone'); h.fairways.forEach(r => P(smooth(r), 'sk-tone')); P(smooth(h.green.ring), 'sk-tone');
+    P(cor, 'sk-rough'); P(cor, 'sk-rough2', { fill: true, fillColor: 'url(#skRough2)', stroke: false });
+    P(cor, 'sk-pass2 heavy');
+    h.fairways.forEach(r => { const sm = smooth(r); P(sm, 'sk-fw'); P(sm, 'sk-pass2'); });
+    h.water.forEach(r => { const sm = smooth(r); P(sm, 'sk-water'); P(sm, 'sk-pass2'); });
+    h.bunkers.forEach(r => { const sm = smooth(r); P(shifted(sm, 2.2), 'sk-sandshadow'); P(sm, 'sk-sand'); P(sm, 'sk-pass2'); });
+    const g = smooth(h.green.ring);
+    P(scaled(g, 1.45), 'sk-contour'); P(scaled(g, 1.22), 'sk-contour');
+    P(g, 'sk-green'); P(g, 'sk-greentone'); P(g, 'sk-pass2 heavy');
+    add(L.polyline(h.line.map(p => [p.lat, p.lon]), { className: 'sk-line', interactive: false, noClip: true }));
+    for (const k of ['ray', 'ray2']) if (L_[k]) L_[k].bringToFront();
+    tagBig();
+  }
+  // browsers clip SVG filters on shapes many screens wide; those shapes go unfiltered
+  function tagBig() { holeLayers.forEach(l => { if (!l.getBounds || !l.getElement) return; const b = l.getBounds(); if (!b.isValid()) return; const p1 = map.latLngToLayerPoint(b.getNorthWest()), p2 = map.latLngToLayerPoint(b.getSouthEast()); const big = Math.abs(p2.x - p1.x) > 2000 || Math.abs(p2.y - p1.y) > 2000; const el = l.getElement(); if (el) el.classList.toggle('big', big); }); }
+  map.on('zoomend', tagBig);
+  // patterns and filters live inside Leaflet's own SVG; each filter is bounded to its
+  // own shape, which is what keeps iPhone Safari drawing them
+  function sketchDefs() {
+    const svg = map.getPane('overlayPane').querySelector('svg'); if (!svg || svg.querySelector('#skFw')) return;
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = [
+      '<pattern id="skRough" width="13" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><rect width="13" height="40" fill="#F0E9CF"/><line x1="2" y1="0" x2="2" y2="40" stroke="#2B2B27" stroke-width=".8" opacity=".3" stroke-dasharray="11 3 7 5 14 2"/><line x1="8.5" y1="6" x2="8.5" y2="40" stroke="#2B2B27" stroke-width=".6" opacity=".2" stroke-dasharray="6 4 12 3"/></pattern>',
+      '<pattern id="skRough2" width="17" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(52)"><line x1="4" y1="0" x2="4" y2="46" stroke="#2B2B27" stroke-width=".6" opacity=".16" stroke-dasharray="9 6 15 4 5 7"/></pattern>',
+      '<pattern id="skFw" width="8" height="34" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="8" height="34" fill="#F7F1DC"/><line x1="1.5" y1="0" x2="1.5" y2="34" stroke="#2B2B27" stroke-width=".7" opacity=".32" stroke-dasharray="9 2 13 3 6 4"/><line x1="5.5" y1="4" x2="5.5" y2="34" stroke="#2B2B27" stroke-width=".55" opacity=".22" stroke-dasharray="5 3 10 2"/></pattern>',
+      '<pattern id="skGreen" width="4.2" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(42)"><rect width="4.2" height="22" fill="#F7F1DC"/><line x1="1" y1="0" x2="1" y2="22" stroke="#2B2B27" stroke-width=".65" opacity=".6" stroke-dasharray="7 1.5 9 2"/><line x1="3.1" y1="3" x2="3.1" y2="22" stroke="#2B2B27" stroke-width=".55" opacity=".45" stroke-dasharray="5 2 8 1.5"/></pattern>',
+      '<pattern id="skSand" width="4.4" height="4.4" patternUnits="userSpaceOnUse"><rect width="4.4" height="4.4" fill="#F9F2DC"/><circle cx="1.1" cy="1.3" r=".55" fill="#2B2B27" opacity=".6"/><circle cx="3.3" cy="3.4" r=".45" fill="#2B2B27" opacity=".5"/></pattern>',
+      '<pattern id="skWater" width="12" height="4.6" patternUnits="userSpaceOnUse"><rect width="12" height="4.6" fill="#F3EEDB"/><line x1="0" y1="2.3" x2="12" y2="2.3" stroke="#2B2B27" stroke-width=".65" opacity=".6"/></pattern>',
+      '<radialGradient id="skEdge" cx=".5" cy=".5" r=".62"><stop offset=".55" stop-color="#3C3C38" stop-opacity="0"/><stop offset="1" stop-color="#3C3C38" stop-opacity=".22"/></radialGradient>',
+      '<filter id="skblur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="4"/></filter>',
+      '<filter id="skPencil" x="-6%" y="-6%" width="112%" height="112%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" result="d"/><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2 -.25" result="ta"/><feComposite in="d" in2="ta" operator="in"/></filter>',
+      '<filter id="skPencil2" x="-6%" y="-6%" width="112%" height="112%"><feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.6" result="d"/><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="5" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 2 -.3" result="ta"/><feComposite in="d" in2="ta" operator="in"/></filter>',
+      '<filter id="skblur2" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/></filter>'
+    ].join('');
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  function setLook(l) { look = l; try { localStorage.setItem('pcc-look', l); } catch (_) {} drawCourse(holeIdx); }
+  document.getElementById('lookSketch').addEventListener('click', () => setLook('sketch'));
+  document.getElementById('lookSat').addEventListener('click', () => setLook('sat'));
+  const icon = (cls, size, html) => L.divIcon({ className: '', html: html || `<div class="${cls}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+  const xSvg = '<div class="xmark"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M5 5 L17 17 M17 5 L5 17"/></svg></div>';
+  const stickSvg = '<div class="stick"><svg width="26" height="34" viewBox="0 0 26 34"><path class="pole" d="M8 31 V5"/><path class="pennant" d="M8 5 L22 9.5 L8 14 Z"/><circle class="hole" cx="8" cy="31" r="2.4"/></svg></div>';
+  // a shot's flight: a gentle bow to the left of the line, sampled into points
+  function arc(a, b, bow) {
+    const kx = 111320 * Math.cos(a.lat * Math.PI / 180), ky = 111320;
+    const dx = (b.lng - a.lng) * kx, dy = (b.lat - a.lat) * ky, L2 = Math.hypot(dx, dy) || 1;
+    const cx = dx / 2 + dy / L2 * bow * L2, cy = dy / 2 - dx / L2 * bow * L2; // control point, offset perpendicular
+    const out = []; for (let i = 0; i <= 24; i++) { const t = i / 24; const x = (1 - t) * (1 - t) * 0 + 2 * (1 - t) * t * cx + t * t * dx, y = 2 * (1 - t) * t * cy + t * t * dy; out.push([a.lat + y / ky, a.lng + x / kx]); }
+    return out;
+  }
+  const flagSvg = '<div class="flag"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M4 15V1.5" stroke="#FFFDD0" stroke-width="2" stroke-linecap="round"/><path d="M5 2h7l-2 3 2 3H5z" fill="#FFFDD0"/></svg></div>';
+  const L_ = {};
+  const upsert = (key, latlng, opts) => { if (L_[key]) L_[key].setLatLng(latlng); else L_[key] = L.marker(latlng, Object.assign({ interactive: false }, opts)).addTo(map); return L_[key]; };
+  const drop = key => { if (L_[key]) { map.removeLayer(L_[key]); delete L_[key]; } };
+  const label = (key, at, text, sub) => { const ic = L.divIcon({ className: '', html: `<div class="ylab">${text}<small>${sub}</small></div>`, iconSize: [0, 0], iconAnchor: [0, 0] }); if (L_[key]) { L_[key].setLatLng(at); L_[key].setIcon(ic); } else L_[key] = L.marker(at, { icon: ic, interactive: false }).addTo(map); };
+
+  // which hole am I on? nearest hole line, but never jump while I'm within 40 m of the current green
+  function detectHole(p) {
+    const segD = (q, a, b) => { const ax = (q.lng - a.lon) * Math.cos(q.lat * Math.PI / 180) * 111320, ay = (q.lat - a.lat) * 111320; const bx = (b.lon - a.lon) * Math.cos(q.lat * Math.PI / 180) * 111320, by = (b.lat - a.lat) * 111320; const l2 = bx * bx + by * by || 1; let t = (ax * bx + ay * by) / l2; t = Math.max(0, Math.min(1, t)); return Math.hypot(ax - bx * t, ay - by * t); };
+    let best = 0, bd = 1e9;
+    H.forEach((h, i) => { let d = 1e9; for (let k = 0; k + 1 < h.line.length; k++) d = Math.min(d, segD(p, h.line[k], h.line[k + 1])); if (i === holeIdx) d *= 0.6; if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  let frames = 0, programmatic = false, userView = false;
+  map.on('zoomstart movestart', () => { if (!programmatic) userView = true; });
+  function frame() {
+    programmatic = true; setTimeout(() => { programmatic = false; }, 900);
+    const h = H[holeIdx]; const t = ll(teeOf(h).center), g = ll(h.green.center);
+    const ref = t; // the whole hole: tee at the bottom, green at the top
+    map.setBearing(-bearing(ref, g));
+    const d = Math.max(ref.distanceTo(g), 80);
+    const hgt = map.getSize().y; const mpp = d / (hgt * 0.66);
+    const z = Math.min(19, Math.max(15, Math.log2(156543.03 * Math.cos(g.lat * Math.PI / 180) / mpp)));
+    const mppZ = 156543.03 * Math.cos(g.lat * Math.PI / 180) / Math.pow(2, z);
+    const back = (0.5 - 0.16) * hgt * mppZ; const rad = (bearing(ref, g) + 180) * Math.PI / 180;
+    const c = L.latLng(g.lat + Math.cos(rad) * back / 111320, g.lng + Math.sin(rad) * back / (111320 * Math.cos(g.lat * Math.PI / 180)));
+    map.setView(c, z, { animate: started && frames > 0 }); frames++; framed = true; userView = false;
+  }
+  // the approach: fit you (or the tee), the target and the green, green still at the top
+  function frameApproach() {
+    const h = H[holeIdx]; const g = ll(h.green.center); const p = me && onHole(L.latLng(me.lat, me.lng), h) ? L.latLng(me.lat, me.lng) : ll(teeOf(h).center);
+    programmatic = true; setTimeout(() => { programmatic = false; }, 900);
+    map.setBearing(-bearing(p, g));
+    const bnds = L.latLngBounds([p, target, g]);
+    map.fitBounds(bnds, { paddingTopLeft: [60, 90], paddingBottomRight: [60, 140], animate: true, maxZoom: 19 });
+    framed = true; userView = false;
+  }
+  function drawOthers() {
+    // JJ's cart is a hole ahead: on our green when we're on the tee, then gone up the next hole
+    const h = H[holeIdx]; const t = teeOf(h);
+    let frac = 0.82; if (me) { const p = L.latLng(me.lat, me.lng); const along = 1 - p.distanceTo(ll(h.green.center)) / Math.max(1, ll(t.center).distanceTo(ll(h.green.center))); frac = Math.min(0.97, Math.max(0.82, along + 0.55)); }
+    const line = h.line; const total = line.reduce((a, p, k, arr) => k ? a + ll(arr[k - 1]).distanceTo(ll(p)) : 0, 0); let want = frac * total, pos = ll(line[line.length - 1]);
+    for (let k = 1; k < line.length; k++) { const a = ll(line[k - 1]), b = ll(line[k]); const d = a.distanceTo(b); if (want <= d) { const u = want / d; pos = L.latLng(a.lat + (b.lat - a.lat) * u, a.lng + (b.lng - a.lng) * u); break; } want -= d; }
+    const onGreen = frac > 0.93;
+    if (onGreen && me && ll(me).distanceTo(ll(h.green.center)) < 60) { drop('cart'); drop('cartlab'); $('grp').hidden = false; $('grpt').textContent = 'bums · up ahead on ' + (H[holeIdx + 1] ? H[holeIdx + 1].hole : h.hole); return; }
+    upsert('cart', pos, { icon: L.divIcon({ className: '', html: '<div class="cart"><i></i><i></i></div>', iconSize: [25, 11], iconAnchor: [12, 5] }) });
+    upsert('cartlab', pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab">bums</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
+    $('grp').hidden = false; $('grpt').textContent = 'bums · ' + (onGreen ? 'on the green' : 'in the fairway') + ' · hole ' + h.hole;
+  }
+  function drawSolo() {
+    const h = H[holeIdx]; const who = others.filter(o => o.solo && otherHole(o) === holeIdx);
+    for (let k = 0; k < 3; k++) { drop('solo' + k); drop('sololab' + k); }
+    who.forEach((o, k) => {
+      // 45% down the hole, a touch left of the line
+      const line = h.line; const total = line.reduce((a, p, i, arr) => i ? a + ll(arr[i - 1]).distanceTo(ll(p)) : 0, 0); let want = 0.3 * total, pos = ll(line[0]);
+      for (let i = 1; i < line.length; i++) { const a = ll(line[i - 1]), b = ll(line[i]); const d = a.distanceTo(b); if (want <= d) { const u = want / d; pos = L.latLng(a.lat + (b.lat - a.lat) * u, a.lng + (b.lng - a.lng) * u); break; } want -= d; }
+      // step 30 m to the left of the hole line (perpendicular), so nothing sits on the yardage
+      const g = ll(h.green.center); const bx = (g.lng - pos.lng) * Math.cos(pos.lat * Math.PI / 180), by = g.lat - pos.lat; const L2 = Math.hypot(bx, by) || 1; const px = -by / L2, py = bx / L2; pos = L.latLng(pos.lat + py * 30 / 111320, pos.lng + px * 30 / (111320 * Math.cos(pos.lat * Math.PI / 180)));
+      upsert('solo' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="solo"></div>', iconSize: [13, 13], iconAnchor: [6, 6] }) });
+      upsert('sololab' + k, pos, { icon: L.divIcon({ className: '', html: '<div class="cartlab" data-who="' + o.n + '">bum</div>', iconSize: [0, 0], iconAnchor: [0, 0] }), interactive: true });
+    });
+  }
+  function whoOn(hole) {
+    const out = [];
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–'; };
+    if (hole === holeIdx) players.forEach((p, k) => out.push([p.n, tot(scores[k]), p.guest]));
+    if (hole === Math.min(17, holeIdx + 1)) cart2.forEach((p, k) => out.push([p.n, tot(cart2Scores[k])]));
+    others.forEach(o => { if (otherHole(o) === hole) out.push([o.n, otherToPar(o).txt]); });
+    return out;
+  }
+  function drawRail() {
+    const rail = $('rail');
+    rail.innerHTML = [...Array(N).keys()].map(k => { const who = whoOn(k); const cls = k === holeIdx ? 'me' : (who.length ? 'on' : ''); return `<div class="c ${cls}" data-h="${k}">${k + 1}</div>`; }).join('');
+    rail.onclick = e => { const el = e.target.closest('.c'); if (!el) return; e.stopPropagation(); const k = Number(el.dataset.h); const who = whoOn(k); if (!who.length) { $('pop').hidden = true; return; } popover((k === holeIdx ? 'your hole' : 'hole ' + (k + 1)) + ' · ' + who.length + (who.length === 1 ? ' bum' : ' bums'), who); };
+  }
+  function drawHole() {
+    const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers(); drawSolo(); drawRail();
+    $('pillt').textContent = `${h.hole} · Par ${h.par} · ${t.yds}`;
+    const rise = h.green.elev !== null && t.elev !== null ? Math.round(h.green.elev - t.elev) : null;
+    $('sub').innerHTML = `<span>green <b>${h.green.depthYds || '—'}</b> deep</span><span>${rise === null ? '' : (rise > 0 ? '<b>+' + rise + '</b> ft uphill' : rise < 0 ? '<b>' + rise + '</b> ft downhill' : 'flat')}</span><span>${h.handicap ? 'hcp <b>' + h.handicap + '</b>' : ''}</span>`;
+    drop('flag'); if (look === 'sketch') upsert('flag', ll(h.green.center), { icon: L.divIcon({ className: '', html: stickSvg, iconSize: [26, 34], iconAnchor: [8, 31] }) }); else upsert('flag', ll(h.green.center), { icon: icon('flag', 30, flagSvg) });
+    for (let k = 0; k < 4; k++) drop('tee' + k);
+    if (!L_.line) L_.line = L.polyline(h.line.map(p => [p.lat, p.lon]), { color: 'rgba(243,239,199,.55)', weight: 1.5, dashArray: '2 8', interactive: false }).addTo(map); else L_.line.setLatLngs(h.line.map(p => [p.lat, p.lon]));
+    framed = false; target = null; drop('ray2'); redraw();
+  }
+  function frontBack(from, h) {
+    const g = h.green.center; const kx = 111320 * Math.cos(from.lat * Math.PI / 180), ky = 111320;
+    const T = { x: (g.lon - from.lng) * kx, y: (g.lat - from.lat) * ky }; const L2 = Math.hypot(T.x, T.y) || 1; const ux = T.x / L2, uy = T.y / L2; const hits = [];
+    const r = h.green.ring; for (let i = 0; i < r.length; i++) { const a = { x: (r[i].lon - from.lng) * kx, y: (r[i].lat - from.lat) * ky }, b = { x: (r[(i + 1) % r.length].lon - from.lng) * kx, y: (r[(i + 1) % r.length].lat - from.lat) * ky }; const dx = b.x - a.x, dy = b.y - a.y; const den = ux * dy - uy * dx; if (Math.abs(den) < 1e-9) continue; const t = (a.x * dy - a.y * dx) / den, u = (a.x * uy - a.y * ux) / den; if (u >= 0 && u <= 1 && t > 0) hits.push(t); }
+    hits.sort((a, b) => a - b); const mid = L2;
+    return hits.length >= 2 ? { front: hits[0], back: hits[hits.length - 1] } : { front: Math.max(0, mid - 12 * M_PER_YD), back: mid + 12 * M_PER_YD };
+  }
+  const onHole = (p, h) => distToLine({ lat: p.lat, lon: p.lng }, h.line) < 90;
+  function redraw() {
+    const h = H[holeIdx]; const g = ll(h.green.center);
+    if (me && onHole(L.latLng(me.lat, me.lng), h)) {
+      drop('origin');
+      const p = L.latLng(me.lat, me.lng);
+      upsert('ring', p, { icon: icon('me-ring', 64) }); upsert('me', p, { icon: icon('me-dot', 18) });
+      const d = p.distanceTo(g); const fb0 = frontBack(p, h); const df = fb0.front, db = fb0.back;
+      if (target) {
+        // you → target → green: two legs, two numbers
+        if (!L_.ray) L_.ray = L.polyline(arc(p, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(p, target, .07));
+        if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06));
+        upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) });
+        const d1 = p.distanceTo(target), d2 = target.distanceTo(g);
+        label('glab', L.latLng(...arc(p, target, .07)[12]), fmt(d1), 'to the target');
+        label('tlab', L.latLng(...arc(target, g, .06)[12]), fmt(d2), 'approach');
+        L_.tlab.getElement() && L_.tlab.getElement().firstElementChild.classList.add('sm');
+      } else {
+        if (!L_.ray) L_.ray = L.polyline(arc(p, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(p, g, .045));
+        drop('ray2'); drop('tgt'); drop('tlab');
+        label('glab', L.latLng(...arc(p, g, .045)[12]), fmt(d), 'to the middle');
+      }
+      $('big').textContent = fmt(d);
+      const rise = h.green.elev !== null && me.elevUSGS != null ? h.green.elev - me.elevUSGS : null;
+      $('biglbl').textContent = rise === null ? 'to the middle' : `to the middle · plays ${Math.round(d / M_PER_YD + rise / 3)}`;
+      $('fb').innerHTML = `<b>${fmt(df)}</b> front<br><b>${fmt(db)}</b> back`;
+      $('fmb').innerHTML = target
+        ? `<span><small>target</small> <b>${fmt(p.distanceTo(target))}</b></span><span><small>in</small> ${fmt(target.distanceTo(g))}</span><span><small>F</small> ${fmt(df)} · <small>B</small> ${fmt(db)}</span>`
+        : `<span><small>F</small> ${fmt(df)}</span><b>${fmt(d)}</b><span><small>B</small> ${fmt(db)}</span>${rise === null ? '' : '<span><small>plays</small> ' + Math.round(d / M_PER_YD + rise / 3) + '</span>'}`;
+      const chip = $('acc'); chip.textContent = `±${fmt(raw ? raw.acc : me.acc)} yd`; chip.className = 'chip ' + (me.acc <= 6 ? 'good' : me.acc <= 15 ? 'ok' : 'bad');
+      if (!framed) frame(); else if (!userView) { const pt = map.latLngToContainerPoint(p), sz = map.getSize(); if (pt.x < sz.x * .06 || pt.x > sz.x * .94 || pt.y < sz.y * .05 || pt.y > sz.y * .95) frame(); }
+      drawOthers(); drawRail();
+    } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: L.divIcon({ className: '', html: '<div class="teelab" style="background:#E3B278;position:static;transform:none"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) });
+      if (target) { if (!L_.ray) L_.ray = L.polyline(arc(t, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, target, .07)); if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06)); upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'approach'); }
+      else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; { const fbt = frontBack(t, h); $('fmb').innerHTML = `<span><small>F</small> ${fmt(fbt.front)}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(fbt.back)}</span>`; } }
+    drawCard();
+  }
+  function drawCard() {
+    const i = holeIdx;
+    const toPar = (r, from, to) => { let s = 0, n = 0; for (let k = from; k < to; k++) if (r[k] !== null) { s += r[k] - H[k].par; n++; } return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : ''; };
+    const mark = (v, par) => (v === null || par == null) ? '' : v === 8 ? 'snow' : (v - par <= -2 ? 'eagle' : v - par === -1 ? 'bird' : v - par === 1 ? 'bogey' : v - par === 2 ? 'dbl' : v - par >= 3 ? 'triple' : '');
+    const cell = (k, c) => c === i ? `<div class="s now">${scores[k][c] === null ? `<button class="empty" data-p="${k}">·</button>` : `<button class="tap" data-p="${k}"><span class="sc ${mark(scores[k][c], H[c].par)}">${scores[k][c]}</span></button>`}</div>` : `<div class="s">${scores[k][c] === null ? '' : `<span class="sc ${mark(scores[k][c], H[c].par)}">${scores[k][c]}</span>`}</div>`;
+    const block = (cols, tails) => `<div class="row h"><div>Hole</div>${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>` +
+      players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div>${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('');
+    if (!showCard || cardTab !== 'card') delete $('card').dataset.key;
+    if (showCard && cardTab === 'outing') { drawOuting(); return; }
+    if (showCard && cardTab === 'group') { renderGroup(); return; }
+    if (showCard && cardTab === 'course') { renderCourse(); return; }
+    if (showCard) {
+      const key = JSON.stringify([i, scores]);
+      if ($('card').dataset.key === key && $('nines')) return; // same card as last time: leave the swipe alone
+      $('card').dataset.key = key;
+      const names = `<div class="names"><div class="row h"><div>Hole</div></div>${players.map(pl => `<div class="row${pl.me ? ' me' : ''}"><div class="n">${pl.n}${pl.guest ? ' <span>guest</span>' : ''}</div></div>`).join('')}</div>`;
+      const page = (cols, tails) => `<div class="page" style="--cols:${cols.length}; flex-basis:${100 / PAGES}%">${cols.includes(i) ? '<div class="colring" style="--k:' + (i % 9) + '"></div>' : ''}<div class="row h">${cols.map(c => `<div class="s">${H[c].hole}</div>`).join('')}${tails.map(t => `<div class="tot">${t[0]}</div>`).join('')}</div>${players.map((pl, k) => `<div class="row${pl.me ? ' me' : ''}">${cols.map(c => cell(k, c)).join('')}${tails.map(t => `<div class="tot">${t[1](scores[k])}</div>`).join('')}</div>`).join('')}</div>`;
+      const pagesHtml = PAGES === 1
+        ? page([...Array(N).keys()], [['tot', r => toPar(r, 0, N)], ['', () => '']])
+        : page([...Array(FRONT).keys()], [['out', r => toPar(r, 0, FRONT)], ['', () => '']]) + page([...Array(N - FRONT).keys()].map(c => c + FRONT), [['in', r => toPar(r, FRONT, N)], ['tot', r => toPar(r, 0, N)]]);
+      $('card').innerHTML = segHtml() + `<div class="cardwrap">${names}<div class="nines" id="nines"><div class="track" style="width:${PAGES * 100}%">${pagesHtml}</div></div></div>` + (PAGES > 1 ? `<div class="dots"><i class="on"></i><i></i></div>` : '');
+      const nines = $('nines'); nines.scrollLeft = i >= 9 ? nines.clientWidth : 0;
+      nines.addEventListener('scroll', () => { if (nines.scrollTop) nines.scrollTop = 0; const p = nines.scrollLeft > nines.clientWidth / 2 ? 1 : 0; [...document.querySelectorAll('.dots i')].forEach((d, k) => d.classList.toggle('on', k === p)); }, { passive: true });
+    } else {
+      const cols = [Math.max(0, i - 2), Math.max(0, i - 1), i].filter((v, k, arr) => arr.indexOf(v) === k);
+      $('card').innerHTML = block(cols, [['thru', r => toPar(r, 0, N)]]);
+      document.querySelectorAll('.card .row').forEach(r => r.style.gridTemplateColumns = `1fr repeat(${cols.length}, 44px) 52px`);
+    }
+  }
+  const segHtml = () => `<div class="seg2"><button data-t="card" class="${cardTab === 'card' ? 'on' : ''}">Our cart</button><button data-t="group" class="${cardTab === 'group' ? 'on' : ''}">Cart ahead</button><button data-t="outing" class="${cardTab === 'outing' ? 'on' : ''}">Outing · 8</button><button data-t="course" class="${cardTab === 'course' ? 'on' : ''}">On course · ${8 + others.length}</button></div>`;
+  // skins across the outing: lowest unique score takes the hole, ties carry
+  function skins() {
+    const all = [...players.map((p, k) => ({ n: p.n, sc: scores[k], me: !!p.me })), ...cart2.map((p, k) => ({ n: p.n, sc: cart2Scores[k] }))];
+    const won = Object.fromEntries(all.map(p => [p.n, 0])); let carry = 0; const detail = [];
+    for (let c = 0; c < N; c++) { if (all.some(p => p.sc[c] === null)) break; const low = Math.min(...all.map(p => p.sc[c])); const w = all.filter(p => p.sc[c] === low); if (w.length === 1) { won[w[0].n] += 1 + carry; detail.push([c + 1, w[0].n, 1 + carry]); carry = 0; } else carry++; }
+    return { all, won, carry, detail };
+  }
+  function drawOuting() {
+    const { all, won, carry, detail } = skins();
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return { n, txt: n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '', s }; };
+    const rows = all.map(p => ({ ...p, t: tot(p.sc), g: Object.values(greenies).filter(x => x === p.n).length })).sort((a, b) => (a.t.n ? a.t.s : 99) - (b.t.n ? b.t.s : 99));
+    $('card').innerHTML = segHtml() + `<div class="orow h"><div></div><div>Player</div><div class="v">thru</div><div class="v">to par</div><div class="v">skins</div><div class="v">grn</div></div>` +
+      rows.map((p, i) => `<div class="orow${p.me ? ' me' : ''}"><div class="p">${i + 1}</div><div class="n">${p.n}${p.me ? '' : ''}</div><div class="v">${p.t.n || '–'}</div><div class="v">${p.t.txt || '–'}</div><div class="v sk">${won[p.n] || ''}</div><div class="v gr">${p.g || ''}</div></div>`).join('') +
+      `<div class="carry"><span>${detail.length ? 'Last skin: ' + detail[detail.length - 1][1] + ' on ' + detail[detail.length - 1][0] : 'No skins yet'}</span><span>carrying <b>${carry}</b></span></div>`;
+  }
+  $('card').addEventListener('click', e => { const b = e.target.closest('.seg2 button'); if (!b) return; cardTab = b.dataset.t; drawCard(); });
+  function renderCourse() {
+    const { all } = skins();
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return { n, txt: n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–' }; };
+    const rows = [
+      ...players.map((p, k) => ({ n: p.n, me: !!p.me, league: 'bums', hole: holeIdx, t: tot(scores[k]), tag: 'your cart' })),
+      ...cart2.map((p, k) => ({ n: p.n, league: 'bums', hole: Math.min(17, holeIdx + 1), t: tot(cart2Scores[k]), tag: 'outing' })),
+      ...others.map(o => { const t = otherToPar(o); return { n: o.n, league: o.league, hole: otherHole(o), t: { n: t.thru, txt: t.txt }, tag: '' }; }),
+    ].sort((a, b) => b.hole - a.hole || a.n.localeCompare(b.n));
+    $('card').innerHTML = segHtml() + `<div class="orow h"><div>#</div><div>On the course now</div><div class="v">thru</div><div class="v">to par</div><div class="v"></div><div class="v"></div></div>` +
+      rows.map(r => `<div class="orow${r.me ? ' me' : ''}"><div class="p">${r.hole + 1}</div><div class="n">${r.n}${r.tag ? '<span class="tag">' + r.tag + '</span>' : ''}<br><span class="lg">${r.league}</span></div><div class="v">${r.t.n || '–'}</div><div class="v">${r.t.txt}</div><div class="v"></div><div class="v"></div></div>`).join('') +
+      `<div class="carry"><span>Anyone in your leagues with a live round, while it's live. Go dark in Settings.</span><span></span></div>`;
+  }
+  function showGroup() { cardTab = 'group'; $('card').hidden = false; showCard = true; $('cardbtn2').textContent = 'Close'; renderGroup(); }
+  function renderGroup() {
+    const { won } = skins(); const h = H[holeIdx];
+    const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–'; };
+    $('card').innerHTML = segHtml() + `<div class="orow h"><div></div><div>In the cart ahead</div><div class="v">thru</div><div class="v">to par</div><div class="v">skins</div><div class="v"></div></div>` +
+      cart2.map((p, k) => `<div class="orow"><div class="p"></div><div class="n">${p.n}</div><div class="v">${cart2Scores[k].filter(v => v !== null).length}</div><div class="v">${tot(cart2Scores[k])}</div><div class="v sk">${won[p.n] || ''}</div><div class="v"></div></div>`).join('') +
+      `<div class="carry"><span>${$('grpt').textContent}</span><span></span></div>`;
+  }
+  $('grp').addEventListener('click', () => popCart2());
+  const par2 = (o) => otherToPar(o).txt;
+  function popover(title, rows) { $('pop').className = 'pop' + (look === 'sketch' ? ' sk' : ''); $('pop').innerHTML = `<div class="t">${title}</div>` + rows.map(r => `<div class="r"><div>${r[0]}${r[2] ? ' <span>guest</span>' : ''}</div><b>${r[1]}</b></div>`).join(''); $('pop').hidden = false; }
+  function popCart2() { const tot = sc => { let s = 0, n = 0; sc.forEach((v, k) => { if (v !== null) { s += v - H[k].par; n++; } }); return n ? (s === 0 ? 'E' : (s > 0 ? '+' : '') + s) : '–'; }; popover($('grpt').textContent, cart2.map((p, k) => [p.n, tot(cart2Scores[k])])); }
+  function popSolo(name) { const o = others.find(x => x.n === name); if (!o) return; popover('bum · hole ' + (otherHole(o) + 1), [[o.n, par2(o)]]); }
+  document.addEventListener('click', e => { const l = e.target.closest('.cartlab'); if (!l) { if (!e.target.closest('.pop') && !e.target.closest('.rail')) $('pop').hidden = true; return; } e.stopPropagation(); if (l.dataset.who) popSolo(l.dataset.who); else popCart2(); }, true);
+  // score sheet
+  let sheetFor = 0;
+  function openSheet(pk) { sheetFor = pk; const h = H[holeIdx]; $('sheett').textContent = `${players[pk].n} · hole ${h.hole} · par ${h.par}`; $('nums').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => `<button data-n="${n}" class="${n === h.par ? 'par' : ''}">${n}</button>`).join('');
+    const g = $('gline'); if (h.par === 3) { g.hidden = false; g.innerHTML = `<div class="k">Closest to the pin · greenie</div><div class="pills">${[...players.map(p => p.n), ...cart2.map(p => p.n)].map(n => `<button data-g="${n}" class="${greenies[holeIdx] === n ? 'on' : ''}">${n}</button>`).join('')}</div>`; } else g.hidden = true;
+    $('sheet').hidden = false; }
+  $('sheet').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; greenies[holeIdx] = greenies[holeIdx] === b.dataset.g ? undefined : b.dataset.g; try { localStorage.setItem('pcc-greenies', JSON.stringify(greenies)); } catch (_) {} [...$('gline').querySelectorAll('button')].forEach(x => x.classList.toggle('on', x.dataset.g === greenies[holeIdx])); });
+  $('nums').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scores[sheetFor][holeIdx] = Number(b.dataset.n); try { localStorage.setItem('pcc-scores', JSON.stringify(scores)); } catch (_) {} $('sheet').hidden = true; drawCard(); });
+  $('sheetx').addEventListener('click', () => { $('sheet').hidden = true; });
+  $('card').addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b) openSheet(Number(b.dataset.p)); });
+  $('scorebtn2').addEventListener('click', () => { $('card').hidden = true; openSheet(0); });
+  $('cardbtn2').addEventListener('click', () => { const open = $('card').hidden; $('card').hidden = !open; showCard = open; $('cardbtn2').textContent = open ? 'Close' : 'Card'; drawCard(); });
+  map.on('click', e => {
+    if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.cartlab')) return;
+    if (!$('card').hidden) { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; return; }
+    if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) { target = null; framed = false; redraw(); return; }
+    target = e.latlng; redraw(); frameApproach();
+  });
+  $('prev').addEventListener('click', () => { holeIdx = (holeIdx + N - 1) % N; drawHole(); });
+  $('next').addEventListener('click', () => { holeIdx = (holeIdx + 1) % N; drawHole(); });
+  map.on('dragstart', () => { framed = true; userView = true; });
+
+  // USGS elevation under you, at most every 5 s / 5 m
+  let lastU = 0, lastUP = null;
+  async function usgs(p) { try { const r = await (await fetch(`https://epqs.nationalmap.gov/v1/json?x=${p.lng}&y=${p.lat}&units=Feet&wkid=4326&includeDate=false`)).json(); const v = Number(r.value); return isFinite(v) ? v : null; } catch (_) { return null; } }
+  function onFix(pos) {
+    const c = pos.coords;
+    raw = { lat: c.latitude, lng: c.longitude, acc: c.accuracy || 99, t: pos.timestamp, speed: c.speed };
+    recent.push(raw); if (recent.length > 20) recent.shift();
+    if (!me) me = { lat: raw.lat, lng: raw.lng, acc: raw.acc, elevUSGS: null };
+    else { const d = L.latLng(me.lat, me.lng).distanceTo([raw.lat, raw.lng]); const moving = (raw.speed != null && raw.speed > 0.6) || d > Math.max(raw.acc, me.acc, 4) * 1.2; const w = moving ? 0.7 : Math.min(0.25, 0.12 * (me.acc / Math.max(raw.acc, 1))); me.lat += (raw.lat - me.lat) * w; me.lng += (raw.lng - me.lng) * w; me.acc = moving ? raw.acc : Math.min(me.acc * 0.97 + raw.acc * 0.03, raw.acc * 1.5); }
+    const p = L.latLng(me.lat, me.lng);
+    if (!started) { started = true; frames = 0; map.invalidateSize(); const hi = detectHole(p); if (onHole(p, H[hi])) holeIdx = hi; drawHole(); }
+    else { const hi = detectHole(p); if (hi !== holeIdx && onHole(p, H[hi]) && p.distanceTo(ll(H[holeIdx].green.center)) > 40) { holeIdx = hi; drawHole(); } }
+    const now = Date.now(); if (now - lastU > 5000 && (!lastUP || p.distanceTo(lastUP) > 5)) { lastU = now; lastUP = p; usgs(p).then(v => { if (me) { me.elevUSGS = v; redraw(); } }); }
+    $('hint').textContent = `hole ${H[holeIdx].hole} — found by GPS`;
+    redraw();
+  }
+  function onErr(e) { $('err').textContent = e.code === 1 ? 'Location is blocked. Settings › Privacy › Location Services › Safari Websites → While Using, Precise on. Then reload.' : 'No GPS fix yet — step outside and try again.'; $('gate').hidden = false; $('browse').hidden = false; }
+  $('browse').addEventListener('click', () => { $('gate').hidden = true; setTimeout(() => map.invalidateSize(), 50); drawHole(); });
+  $('start').addEventListener('click', () => {
+    $('gate').hidden = true; setTimeout(() => map.invalidateSize(), 50);
+    if (sim) { // desktop check: walk hole N from its tee toward its green
+      const hi = Math.max(0, Math.min(17, Number(sim) - 1 || 0)); const h = H[hi]; const t = teeOf(h).center, g = h.green.center; let k = 0;
+      setInterval(() => { k = Math.min(k + 0.006, 0.97); const lat = t.lat + (g.lat - t.lat) * k + (Math.random() - .5) * 0.00002, lon = t.lon + (g.lon - t.lon) * k + (Math.random() - .5) * 0.00003; onFix({ timestamp: Date.now(), coords: { latitude: lat, longitude: lon, accuracy: 4 + Math.random() * 3, speed: 1.2 } }); }, 1000); return;
+    }
+    if (!('geolocation' in navigator)) { $('err').textContent = 'No location access in this browser.'; $('gate').hidden = false; return; }
+    navigator.geolocation.watchPosition(onFix, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    // until the first fix, show the hole from the tee
+    if (!started) { drawHole(); $('hint').textContent = 'waiting for GPS — showing hole 1 from the tee'; }
+  });
+  drawHole();
+})();
+</script>
+</body>
+</html>
