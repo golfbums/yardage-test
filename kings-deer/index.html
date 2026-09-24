@@ -31,7 +31,7 @@
   #map.sketch .leaflet-tile-pane { display: none; }
   #map.sketch path.sk-tone { fill: none; stroke: #2B2B27; stroke-width: 11; opacity: .26; filter: url(#skblur); }
   #map.sketch path.sk-rough, #map.sketch path.sk-fw, #map.sketch path.sk-water, #map.sketch path.sk-sand, #map.sketch path.sk-green, #map.sketch path.sk-contour, #map.sketch path.sk-line { filter: url(#skPencil); stroke-linecap: round; }
-  #map.sketch path.big { filter: none; }
+  #map.sketch path.big, #map.zooming path { filter: none !important; }
   #map.sketch path.sk-tone.big { display: none; }
   #map.sketch path.sk-pass2 { fill: none; stroke: #2B2B27; stroke-width: 1; opacity: .6; stroke-linejoin: round; stroke-linecap: round; filter: url(#skPencil2); }
   #map.sketch path.sk-pass2.heavy { stroke-width: 1.3; opacity: .7; }
@@ -264,7 +264,7 @@
   const PAGES = N > 9 ? 2 : 1;
   const TEE_COLORS = { black: '#222', blue: '#3A6B5A', white: '#FFFDD0', gold: '#B9803C', yellow: '#EFC93F', red: '#C0392B', green: '#A6D48A', silver: '#bbb', null: '#E3B278' };
   const params = new URLSearchParams(location.search); const sim = params.get('sim');
-  let me = null, raw = null, recent = [], started = false, holeIdx = 0, teeIdx = 0, framed = false, showCard = false, target = null;
+  let me = null, raw = null, recent = [], started = false, holeIdx = 0, teeIdx = 0, framed = false, showCard = false, target = null, autoTarget = false;
   const players = [{ n: 'ogbum', me: true }, { n: 'Chop' }, { n: 'TrevorGill' }, { n: 'Mike', guest: true }];
   const scores = players.map(() => Array(N).fill(null));
   // the other cart in the outing — their card comes over the air; here it's simulated a hole ahead
@@ -295,10 +295,10 @@
   $('gatep').textContent = `Par ${H.reduce((s, h) => s + (h.par || 0), 0) || '—'} · ${N} holes mapped.` + (C.inferred ? ' Routing inferred from aerial data.' : ' One question, then play.');
   if (C.warning) { const w=document.createElement('div'); w.className='err'; w.textContent=C.warning; $('gatep').after(w); }
   $('teesel').innerHTML = teeSets.map(i => `<button data-i="${i}" class="${i === 0 ? 'on' : ''}">${teeNames[i]}${(() => { const tot = H.reduce((s, h) => s + ((h.tees[i] || h.tees[h.tees.length - 1]).yds), 0); return ' · ' + tot; })()}</button>`).join('');
-  $('teesel').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; teeIdx = Number(b.dataset.i); [...$('teesel').children].forEach(x => x.classList.toggle('on', x === b)); });
+  $('teesel').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; teeIdx = Number(b.dataset.i); [...$('teesel').children].forEach(x => x.classList.toggle('on', x === b)); if (view === 'hole' && (autoTarget || !target)) drawHole(); });
   const teeOf = h => h.tees[Math.min(teeIdx, h.tees.length - 1)];
 
-  const map = L.map('map', { zoomControl: false, rotate: true, rotateControl: false, touchRotate: false, bearing: 0, tap: false, renderer: L.svg({ padding: 1.6 }) }).setView([C.holes[0].tees[0].center.lat, C.holes[0].tees[0].center.lon], 16);
+  const map = L.map('map', { zoomControl: false, rotate: true, rotateControl: false, touchRotate: false, bearing: 0, tap: false, renderer: L.svg({ padding: 0.75 }) }).setView([C.holes[0].tees[0].center.lat, C.holes[0].tees[0].center.lon], 16);
   map.attributionControl.setPrefix(false); map.attributionControl.addAttribution('© OpenStreetMap · USGS · Esri');
   // The hole, drawn like a yardage book: a corridor cut out of the paper, rough inside it,
   // striped fairway, sand, water, green. Only the hole you're on.
@@ -369,8 +369,9 @@
     tagBig();
   }
   // browsers clip SVG filters on shapes many screens wide; those shapes go unfiltered
-  function tagBig() { holeLayers.forEach(l => { if (!l.getBounds || !l.getElement) return; const b = l.getBounds(); if (!b.isValid()) return; const p1 = map.latLngToLayerPoint(b.getNorthWest()), p2 = map.latLngToLayerPoint(b.getSouthEast()); const big = Math.abs(p2.x - p1.x) > 2000 || Math.abs(p2.y - p1.y) > 2000; const el = l.getElement(); if (el) el.classList.toggle('big', big); }); }
-  map.on('zoomend', tagBig);
+  function tagBig() { holeLayers.forEach(l => { if (!l.getBounds || !l.getElement) return; const b = l.getBounds(); if (!b.isValid()) return; const p1 = map.latLngToLayerPoint(b.getNorthWest()), p2 = map.latLngToLayerPoint(b.getSouthEast()); const lim = Math.max(700, Math.max(map.getSize().x, map.getSize().y) * 0.85); const big = Math.abs(p2.x - p1.x) > lim || Math.abs(p2.y - p1.y) > lim; const el = l.getElement(); if (el) el.classList.toggle('big', big); }); }
+  map.on('zoomstart', () => $('map').classList.add('zooming'));
+  map.on('zoomend', () => { tagBig(); requestAnimationFrame(() => $('map').classList.remove('zooming')); });
   // patterns and filters live inside Leaflet's own SVG; each filter is bounded to its
   // own shape, which is what keeps iPhone Safari drawing them
   function sketchDefs() {
@@ -562,7 +563,7 @@
     drop('flag'); if (look === 'sketch') upsert('flag', ll(h.green.center), { icon: L.divIcon({ className: '', html: stickSvg, iconSize: [26, 34], iconAnchor: [8, 31] }) }); else upsert('flag', ll(h.green.center), { icon: icon('flag', 30, flagSvg) });
     for (let k = 0; k < 4; k++) drop('tee' + k);
     if (!L_.line) L_.line = L.polyline(h.line.map(p => [p.lat, p.lon]), { color: 'rgba(243,239,199,.55)', weight: 1.5, dashArray: '2 8', interactive: false }).addTo(map); else L_.line.setLatLngs(h.line.map(p => [p.lat, p.lon]));
-    framed = false; target = null; drop('ray2'); redraw();
+    framed = false; target = idealTarget(h); autoTarget = !!target; drop('ray2'); drop('ray'); redraw();
   }
   function frontBack(from, h) {
     const g = h.green.center; const kx = 111320 * Math.cos(from.lat * Math.PI / 180), ky = 111320;
@@ -572,6 +573,26 @@
     return hits.length >= 2 ? { front: hits[0], back: hits[hits.length - 1] } : { front: Math.max(0, mid - 12 * M_PER_YD), back: mid + 12 * M_PER_YD };
   }
   const onHole = (p, h) => distToLine({ lat: p.lat, lon: p.lng }, h.line) < 90;
+  // The ideal tee shot on a par 4 or 5: a good drive's length from the tee you picked
+  // (back 250, middle 235, front 210 yd), never closer than 100 yd to the green, and in the
+  // middle of the fairway at that distance, so a dogleg aims round the corner, not over it.
+  const DRIVE_YDS = [250, 235, 210];
+  const inRing = (p, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if ((a.lat > p.lat) !== (b.lat > p.lat) && p.lon < (b.lon - a.lon) * (p.lat - a.lat) / (b.lat - a.lat) + a.lon) c = !c; } return c; };
+  function idealTarget(h) {
+    if (!h.par || h.par < 4) return null;
+    const t = ll(teeOf(h).center), g = ll(h.green.center);
+    const D = Math.min(DRIVE_YDS[Math.min(teeIdx, 2)], t.distanceTo(g) / M_PER_YD - 100) * M_PER_YD;
+    if (D < 150 * M_PER_YD) return null;
+    const b0 = bearing(t, g), kx = 111320 * Math.cos(t.lat * Math.PI / 180);
+    const at = deg => { const r = deg * Math.PI / 180; return { lat: t.lat + Math.cos(r) * D / 111320, lon: t.lng + Math.sin(r) * D / kx }; };
+    // sweep an arc of that radius 40 degrees either side of the green; keep the stretches that are fairway
+    const runs = []; let cur = null;
+    for (let a = -40; a <= 40; a++) { const p = at(b0 + a); if (h.fairways.some(r => inRing(p, r))) { if (!cur) runs.push(cur = []); cur.push(a); } else cur = null; }
+    if (!runs.length) { const p = at(b0); return L.latLng(p.lat, p.lon); } // no fairway drawn there: straight at the green
+    // the widest stretch; between equals, the one nearer the line to the green
+    runs.sort((A, B) => (B.length - A.length) || (Math.abs(A[A.length >> 1]) - Math.abs(B[B.length >> 1])));
+    const r = runs[0], p = at(b0 + (r[0] + r[r.length - 1]) / 2); return L.latLng(p.lat, p.lon);
+  }
   function redraw() {
     if (view === 'course') { overviewMe(); return; }
     const h = H[holeIdx]; const g = ll(h.green.center);
@@ -580,6 +601,7 @@
       const p = L.latLng(me.lat, me.lng);
       upsert('ring', p, { icon: icon('me-ring', 64) }); upsert('me', p, { icon: icon('me-dot', 18) });
       const d = p.distanceTo(g); const fb0 = frontBack(p, h); const df = fb0.front, db = fb0.back;
+      if (target && autoTarget && d < target.distanceTo(g) + 25 * M_PER_YD) { target = null; autoTarget = false; }
       if (target) {
         // you → target → green: two legs, two numbers
         if (!L_.ray) L_.ray = L.polyline(arc(p, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(p, target, .07));
@@ -606,7 +628,7 @@
       drawOthers(); drawRail();
     } else { drop('ring'); drop('me'); if (!framed) frame(); const t = ll(teeOf(h).center); upsert('origin', t, { icon: L.divIcon({ className: '', html: '<div class="teelab" style="background:#E3B278;position:static;transform:none"></div>', iconSize: [14, 14], iconAnchor: [7, 7] }) });
       if (target) { if (!L_.ray) L_.ray = L.polyline(arc(t, target, .07), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, target, .07)); if (!L_.ray2) L_.ray2 = L.polyline(arc(target, g, .06), { className: 'ray second', color: '#FFFDD0', weight: 2, dashArray: '7 5', interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray2.setLatLngs(arc(target, g, .06)); upsert('tgt', target, { icon: L.divIcon({ className: '', html: xSvg, iconSize: [22, 22], iconAnchor: [11, 11] }) }); label('glab', L.latLng((t.lat + target.lat) / 2, (t.lng + target.lng) / 2), fmt(t.distanceTo(target)), 'to the target'); label('tlab', L.latLng((target.lat + g.lat) / 2, (target.lng + g.lng) / 2), fmt(target.distanceTo(g)), 'approach'); }
-      else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; { const fbt = frontBack(t, h); $('fmb').innerHTML = `<span><small>F</small> ${fmt(fbt.front)}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(fbt.back)}</span>`; } }
+      else { if (!L_.ray) L_.ray = L.polyline(arc(t, g, .045), { className: 'ray', color: '#FFFDD0', weight: 2.5, interactive: false, noClip: true, smoothFactor: 0 }).addTo(map); else L_.ray.setLatLngs(arc(t, g, .045)); drop('ray2'); drop('tgt'); drop('tlab'); label('glab', L.latLng((t.lat + g.lat) / 2, (t.lng + g.lng) / 2), teeOf(h).yds, 'from the ' + teeNames[Math.min(teeIdx, h.tees.length - 1)].toLowerCase() + ' tees'); } $('big').textContent = teeOf(h).yds; $('biglbl').textContent = 'from the tee'; $('fb').innerHTML = `<b>${fmt(t.distanceTo(ll(h.green.front)))}</b> front<br><b>${fmt(t.distanceTo(ll(h.green.back)))}</b> back`; { const fbt = frontBack(t, h); $('fmb').innerHTML = target ? `<span><small>target</small> <b>${fmt(t.distanceTo(target))}</b></span><span><small>in</small> ${fmt(target.distanceTo(g))}</span><span><small>hole</small> ${teeOf(h).yds}</span>` : `<span><small>F</small> ${fmt(fbt.front)}</span><b>${teeOf(h).yds}</b><span><small>B</small> ${fmt(fbt.back)}</span>`; } }
     drawCard();
   }
   function drawCard() {
@@ -695,8 +717,8 @@
   map.on('click', e => {
     if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.cartlab')) return;
     if (!$('card').hidden) { $('card').hidden = true; $('cardbtn2').textContent = 'Card'; return; }
-    if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) { target = null; framed = false; redraw(); return; }
-    target = e.latlng; redraw(); frameApproach();
+    if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) { target = null; autoTarget = false; framed = false; redraw(); return; }
+    target = e.latlng; autoTarget = false; redraw(); frameApproach();
   });
   $('prev').addEventListener('click', () => { if (view === 'course') return; holeIdx = (holeIdx + N - 1) % N; drawHole(); });
   $('next').addEventListener('click', () => { if (view === 'course') return; holeIdx = (holeIdx + 1) % N; drawHole(); });
