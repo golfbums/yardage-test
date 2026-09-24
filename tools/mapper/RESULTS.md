@@ -11,7 +11,7 @@ course a golfer taps in two minutes. A course it gets confidently wrong costs tr
 |---|---|---|---|---|---|---|
 | prairie-pines | 9 | **PASS** | 21 yd | greens 9/9, holes 9/9 | fairway `ref` | Johnson City KS. Routing confirmed by ogbum in the tap-mapper. OSM had the hole numbers on the fairways. Cart paths settled the par-3 tee. |
 | buffalo-dunes | 18 | **FAIL** | 84 yd | — | `golf=hole` ref | Garden City KS. Correctly refused: the OSM data is the **pre-2021** course. Renovated 2021–26, nines swapped, three greens moved. Matches the old card at 21 yd median, in order. Needs fresher aerial before it can pass. |
-| antler-creek | 18 | **PASS** | 24 yd | — (no golfer-confirmed truth yet) | `golf=hole` ref | Peyton CO (Colorado Springs). All 18 hole ways numbered by the volunteers; card from OpenGolfAPI (six tee sets, per-hole yardages, handicaps agree with the OSM tags). Worst hole 12 at 81 yd is a dogleg measured straight — expected. **OSM has fairways for only 5 of 18 holes**, so the Sketch look draws a corridor band on the other 13 until the photo mapper fills them in. Page: /antler-creek/. |
+| antler-creek | 18 | **PASS** | 24 yd | — (no golfer-confirmed truth yet) | `golf=hole` ref | Peyton CO (Colorado Springs). All 18 hole ways numbered by the volunteers; card from OpenGolfAPI (six tee sets, per-hole yardages, handicaps agree with the OSM tags). Worst hole 12 at 81 yd is a dogleg measured straight — expected. OSM had fairways for only 5 of 18 holes; **the fairways are now read from the free USGS NAIP photo** (`fairways.py`): all 14 par 4/5 holes outlined on the strict pass, par 3s carry none, and the four volunteer polygons were replaced by the photo's (they overlapped 46–56% because the volunteers had drawn fragments). Hole 16 is a dogleg whose OSM hole line is straight, so the volunteer's polygon anchored the search there. Page: /antler-creek/. |
 
 ## Running totals
 
@@ -39,3 +39,22 @@ scraped at volume). No vendor, no per-course fee, no subscription.
   fallback is straight-line distance, which is weaker.
 - **Courses with no published per-hole card** can't be verified at all. They should go
   straight to the tap-mapper rather than be published unchecked.
+
+## Fairways from the photo (`fairways.py`)
+
+The volunteers rarely draw fairways, so they come from the free USGS NAIP photo (4 bands,
+0.3 m, reflown every 2–3 years), never from Google, Apple, Bing or Esri. For every par 4/5:
+keep the living, even-textured turf (NDVI above .28, green over red, texture under .055 in
+an 11-px window), inside 50 m of the hole line or 35 m of a volunteer's fairway polygon,
+cut the green and the tees out with a 3 m collar, keep the mown band the hole line actually
+runs through (a fifth of its samples, or a big band it crosses), soften, trace, simplify at
+2 m. If the strict pass finds nothing, one looser pass (NDVI .20, texture .075) for a dry,
+patchy fairway. Par 3s get no fairway. The report beside each course says which pass each
+hole took and how much it overlaps a volunteer's polygon where one existed.
+
+    python3 tools/mapper/fairways.py courses/<slug>/course.json courses/<slug>/course.json courses/<slug>/naip
+
+Known limits: a parkland course with irrigated, short-mown rough gives weaker contrast (the
+texture and the lidar's ground roughness are the next lever); the photo is a year or two
+old; the line-corridor rule needs a dogleg vertex or a volunteer polygon to reach a landing
+area far off a straight hole line.
