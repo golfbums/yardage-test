@@ -1,0 +1,75 @@
+{
+  "name": "Tamarisk Golf Course",
+  "key": "tamarisk",
+  "where": "811 E. Golf Course Rd, Syracuse, KS 67878 (Hamilton County)",
+  "phone": "(620) 384-7832",
+  "status": "INCOMPLETE — needs par and yardage for holes 2, 4, 5, 6, 8, 9 before it can be routed",
+
+  "known": {
+    "holes": 9,
+    "par": 36,
+    "parMix": "two par 3s, five par 4s, two par 5s",
+    "tees": [
+      { "name": "Blue", "total": 3251, "rating": 34.9, "slope": 111 },
+      { "name": "White", "total": null },
+      { "name": "Red", "total": 2618 }
+    ],
+    "opened": 1996,
+    "architect": "Rick Bucton",
+    "notes": [
+      "Runs along the Arkansas River; fairways lined with tamarisk bushes.",
+      "Water in play on two of the nine holes; scattered sand bunkers.",
+      "Clubhouse looks out over a lake. Driving range and chipping/putting area."
+    ]
+  },
+
+  "holes": [
+    { "hole": 1, "par": 4,    "handicap": 7,    "yds": 379,  "source": "published scorecard" },
+    { "hole": 2, "par": null, "handicap": null, "yds": null },
+    { "hole": 3, "par": 3,    "handicap": null, "yds": null,
+      "note": "shortest hole on the course — 102 yds from the Red; Blue yardage unknown" },
+    { "hole": 4, "par": null, "handicap": null, "yds": null },
+    { "hole": 5, "par": null, "handicap": null, "yds": null },
+    { "hole": 6, "par": null, "handicap": null, "yds": null },
+    { "hole": 7, "par": 5,    "handicap": null, "yds": 550,
+      "note": "longest hole on the course" },
+    { "hole": 8, "par": null, "handicap": null, "yds": null },
+    { "hole": 9, "par": null, "handicap": null, "yds": null }
+  ],
+
+  "cardTee": "Blue",
+
+  "checksums": {
+    "comment": "Use these to tell a real scorecard from a bad transcription before routing.",
+    "blueTotal": 3251,
+    "parTotal": 36,
+    "parCounts": { "3": 2, "4": 5, "5": 2 },
+    "hole1": "par 4, stroke index 7, 379 yds Blue",
+    "hole7Blue": 550,
+    "hole3Red": 102
+  },
+
+  "location": {
+    "comment": "NOT surveyed — Syracuse town centre, as a starting point only. Confirm the course centre on a map before pulling OSM, and use a generous radius.",
+    "approxLat": 37.982,
+    "approxLon": -101.755,
+    "suggestedRadiusMetres": 2000
+  },
+
+  "blocked": {
+    "why": "This was researched from a Claude Code cloud session whose network policy blocks every golf site and every Overpass mirror, so neither the full scorecard nor the OSM geometry could be fetched.",
+    "toFinish": [
+      "Get the full card: tamariskgc.com, the pro shop on (620) 384-7832, or a photo of the scorecard.",
+      "Then: node tools/overpass.js \"Tamarisk Golf Course\" <lat> <lon> 2000 > /tmp/tamarisk-osm.json",
+      "Then route it against this file and check the checksums above."
+    ]
+  },
+
+  "sources": [
+    "https://www.golfpass.com/travel-advisor/courses/6531-tamarisk-golf-course",
+    "https://www.syracuseks.gov/tamarisk-golf-course-1",
+    "https://www.travelks.com/listing/tamarisk-golf-course/2412/",
+    "https://www.golflink.com/golf-courses/ks/syracuse/tamarisk-golf-course",
+    "https://www.tamariskgc.com/"
+  ]
+}

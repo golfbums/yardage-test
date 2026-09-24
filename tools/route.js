@@ -718,8 +718,12 @@ function route(osm, card) {
   const confidence =
     method === 'osm-ref' ? 'high'
     : !anchor || !anchor.decided ? 'refused'
-    : checkable && verifiedCount / checkable >= 0.8 ? 'high'
-    : checkable && verifiedCount / checkable >= 0.5 ? 'medium'
+    // No yardages on the card is not the same as yardages that disagree. The routing can
+    // be sound and simply have nothing to check itself against; say that, rather than
+    // reporting a clean course as low confidence and sending someone hunting for a fault.
+    : !checkable ? 'unverified'
+    : verifiedCount / checkable >= 0.8 ? 'high'
+    : verifiedCount / checkable >= 0.5 ? 'medium'
     : 'low';
 
   return {
