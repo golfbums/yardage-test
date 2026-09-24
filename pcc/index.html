@@ -567,25 +567,29 @@
     return hits.length >= 2 ? { front: hits[0], back: hits[hits.length - 1] } : { front: Math.max(0, mid - 12 * M_PER_YD), back: mid + 12 * M_PER_YD };
   }
   const onHole = (p, h) => distToLine({ lat: p.lat, lon: p.lng }, h.line) < 90;
-  // The ideal tee shot on a par 4 or 5: a good drive's length from the tee you picked
-  // (back 250, middle 235, front 210 yd), never closer than 100 yd to the green, and in the
-  // middle of the fairway at that distance, so a dogleg aims round the corner, not over it.
-  const DRIVE_YDS = [250, 235, 210];
+  // The ideal tee shot on a par 4 or 5: 299 yd from the tee, never closer than 100 yd to the
+  // green, in the middle of the fairway at that distance, so a dogleg aims round the corner,
+  // not over it. Where the fairway has ended by then, lay up to where it last runs.
+  const DRIVE_YDS = 299;
   const inRing = (p, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if ((a.lat > p.lat) !== (b.lat > p.lat) && p.lon < (b.lon - a.lon) * (p.lat - a.lat) / (b.lat - a.lat) + a.lon) c = !c; } return c; };
   function idealTarget(h) {
     if (!h.par || h.par < 4) return null;
     const t = ll(teeOf(h).center), g = ll(h.green.center);
-    const D = Math.min(DRIVE_YDS[Math.min(teeIdx, 2)], t.distanceTo(g) / M_PER_YD - 100) * M_PER_YD;
-    if (D < 150 * M_PER_YD) return null;
+    const D0 = Math.min(DRIVE_YDS, t.distanceTo(g) / M_PER_YD - 100) * M_PER_YD;
+    if (D0 < 150 * M_PER_YD) return null;
     const b0 = bearing(t, g), kx = 111320 * Math.cos(t.lat * Math.PI / 180);
+    for (let D = D0; D >= 150 * M_PER_YD; D -= 5 * M_PER_YD) {
     const at = deg => { const r = deg * Math.PI / 180; return { lat: t.lat + Math.cos(r) * D / 111320, lon: t.lng + Math.sin(r) * D / kx }; };
     // sweep an arc of that radius 40 degrees either side of the green; keep the stretches that are fairway
     const runs = []; let cur = null;
     for (let a = -40; a <= 40; a++) { const p = at(b0 + a); if (h.fairways.some(r => inRing(p, r))) { if (!cur) runs.push(cur = []); cur.push(a); } else cur = null; }
-    if (!runs.length) { const p = at(b0); return L.latLng(p.lat, p.lon); } // no fairway drawn there: straight at the green
+    if (!runs.length) continue; // no fairway at this distance: 5 yd shorter
     // the widest stretch; between equals, the one nearer the line to the green
     runs.sort((A, B) => (B.length - A.length) || (Math.abs(A[A.length >> 1]) - Math.abs(B[B.length >> 1])));
     const r = runs[0], p = at(b0 + (r[0] + r[r.length - 1]) / 2); return L.latLng(p.lat, p.lon);
+    }
+    // no fairway drawn anywhere out there: straight at the green
+    const r = D0 / 111320, br = b0 * Math.PI / 180; return L.latLng(t.lat + Math.cos(br) * r, t.lng + Math.sin(br) * D0 / kx);
   }
   function redraw() {
     if (view === 'course') { overviewMe(); return; }
