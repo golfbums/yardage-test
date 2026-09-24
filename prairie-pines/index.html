@@ -283,6 +283,7 @@
   const maxTees = Math.max(...H.map(h => h.tees.length));
   const teeSets = Array.from({ length: Math.min(3, maxTees) }, (_, i) => i);
   $('gatep').textContent = `Par ${H.reduce((s, h) => s + (h.par || 0), 0) || '—'} · ${N} holes mapped.` + (C.inferred ? ' Routing inferred from aerial data.' : ' One question, then play.');
+  if (C.warning) { const w=document.createElement('div'); w.className='err'; w.textContent=C.warning; $('gatep').after(w); }
   $('teesel').innerHTML = teeSets.map(i => `<button data-i="${i}" class="${i === 0 ? 'on' : ''}">${teeNames[i]}${(() => { const tot = H.reduce((s, h) => s + ((h.tees[i] || h.tees[h.tees.length - 1]).yds), 0); return ' · ' + tot; })()}</button>`).join('');
   $('teesel').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; teeIdx = Number(b.dataset.i); [...$('teesel').children].forEach(x => x.classList.toggle('on', x === b)); });
   const teeOf = h => h.tees[Math.min(teeIdx, h.tees.length - 1)];
