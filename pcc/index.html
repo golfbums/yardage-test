@@ -572,9 +572,29 @@
   // not over it. Where the fairway has ended by then, lay up to where it last runs.
   const DRIVE_YDS = 299;
   const inRing = (p, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if ((a.lat > p.lat) !== (b.lat > p.lat) && p.lon < (b.lon - a.lon) * (p.lat - a.lat) / (b.lat - a.lat) + a.lon) c = !c; } return c; };
+  const inAny = (p, rings) => rings.some(r => inRing(p, r));
+  // nothing but grass between p and the green: no bunker or water on the straight line in
+  const clearIn = (p, g, h) => { for (let k = 1; k < 30; k++) { const q = { lat: p.lat + (g.lat - p.lat) * k / 30, lon: p.lng + (g.lng - p.lng) * k / 30 }; if (inAny(q, h.bunkers) || inAny(q, h.water)) return false; } return true; };
+  function layUp(h, t, g) {
+    const kx = 111320 * Math.cos(g.lat * Math.PI / 180), back = bearing(g, t);
+    let loose = null;
+    for (const yds of [100, 105, 95, 110, 90, 115, 120]) {
+      const R = yds * M_PER_YD; const runs = []; let cur = null;
+      // an arc round the green, 70 degrees either side of the line back to the tee
+      for (let a = -70; a <= 70; a++) { const r = (back + a) * Math.PI / 180; const p = L.latLng(g.lat + Math.cos(r) * R / 111320, g.lng + Math.sin(r) * R / kx);
+        const ok = inAny({ lat: p.lat, lon: p.lng }, h.fairways) && t.distanceTo(p) <= DRIVE_YDS * M_PER_YD;
+        if (ok && !loose) loose = p;
+        if (ok && clearIn(p, g, h)) { if (!cur) runs.push(cur = []); cur.push({ a, p }); } else cur = null; }
+      if (runs.length) { runs.sort((A, B) => (B.length - A.length) || (Math.abs(A[A.length >> 1].a) - Math.abs(B[B.length >> 1].a))); const r = runs[0]; return r[r.length >> 1].p; }
+    }
+    return loose; // fairway at that distance, but sand on every line in: the best we have
+  }
   function idealTarget(h) {
     if (!h.par || h.par < 4) return null;
     const t = ll(teeOf(h).center), g = ll(h.green.center);
+    // A short hole (one where 299 would leave under 100 in): lay up to 100 yd from the
+    // middle of the green, in the fairway, with no sand or water on the line in.
+    if (t.distanceTo(g) / M_PER_YD - 100 < DRIVE_YDS) { const lay = layUp(h, t, g); if (lay) return lay; }
     const D0 = Math.min(DRIVE_YDS, t.distanceTo(g) / M_PER_YD - 100) * M_PER_YD;
     if (D0 < 150 * M_PER_YD) return null;
     const b0 = bearing(t, g), kx = 111320 * Math.cos(t.lat * Math.PI / 180);
