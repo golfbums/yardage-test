@@ -1,0 +1,23 @@
+{
+  "key": "kings-deer",
+  "query": "King's Deer Golf Club, Monument, Colorado",
+  "matchedName": "King's Deer Golf Course",
+  "lat": 39.1173873,
+  "lon": -104.791802,
+  "fetched": "see git history",
+  "counts": {
+    "greens": 19,
+    "tees": 72,
+    "fairways": 8,
+    "holeWays": 0,
+    "cartPaths": 29,
+    "bunkers": 53,
+    "water": 8
+  },
+  "holeNumbersOn": {
+    "holeWay": 0,
+    "fairway": 0,
+    "tee": 0,
+    "green": 0
+  }
+}
