@@ -1,0 +1,120 @@
+{
+ "key": "tamarisk",
+ "course": "Tamarisk Golf Course",
+ "found": true,
+ "holeCount": 9,
+ "par": 36,
+ "source": "OpenGolfAPI /api/v1/courses/31770ebf-d14d-4a44-8da6-ac600196766f (ODbL)",
+ "teeSets": [
+  {
+   "name": "Blue",
+   "totalYards": 3251,
+   "rating": null,
+   "slope": 123
+  },
+  {
+   "name": "White",
+   "totalYards": 2986,
+   "rating": null,
+   "slope": 116
+  },
+  {
+   "name": "Red",
+   "totalYards": 2618,
+   "rating": null,
+   "slope": 112
+  }
+ ],
+ "holes": [
+  {
+   "hole": 1,
+   "par": 4,
+   "handicap": 8,
+   "yardsByTee": {
+    "Blue": 379,
+    "White": 358,
+    "Red": 278
+   }
+  },
+  {
+   "hole": 2,
+   "par": 4,
+   "handicap": 4,
+   "yardsByTee": {
+    "Blue": 405,
+    "White": 378,
+    "Red": 368
+   }
+  },
+  {
+   "hole": 3,
+   "par": 3,
+   "handicap": 12,
+   "yardsByTee": {
+    "Blue": 187,
+    "White": 141,
+    "Red": 102
+   }
+  },
+  {
+   "hole": 4,
+   "par": 5,
+   "handicap": 10,
+   "yardsByTee": {
+    "Blue": 478,
+    "White": 461,
+    "Red": 436
+   }
+  },
+  {
+   "hole": 5,
+   "par": 4,
+   "handicap": 14,
+   "yardsByTee": {
+    "Blue": 315,
+    "White": 297,
+    "Red": 254
+   }
+  },
+  {
+   "hole": 6,
+   "par": 4,
+   "handicap": 2,
+   "yardsByTee": {
+    "Blue": 418,
+    "White": 393,
+    "Red": 352
+   }
+  },
+  {
+   "hole": 7,
+   "par": 5,
+   "handicap": 6,
+   "yardsByTee": {
+    "Blue": 550,
+    "White": 499,
+    "Red": 451
+   }
+  },
+  {
+   "hole": 8,
+   "par": 4,
+   "handicap": 18,
+   "yardsByTee": {
+    "Blue": 333,
+    "White": 303,
+    "Red": 266
+   }
+  },
+  {
+   "hole": 9,
+   "par": 3,
+   "handicap": 16,
+   "yardsByTee": {
+    "Blue": 186,
+    "White": 147,
+    "Red": 111
+   }
+  }
+ ]
+}

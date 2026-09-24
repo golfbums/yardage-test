@@ -1,0 +1,23 @@
+{
+  "key": "tamarisk",
+  "query": "Tamarisk Golf Course, Syracuse, Kansas",
+  "matchedName": "Tamarisk Golf Course",
+  "lat": 37.9640856,
+  "lon": -101.7497759,
+  "fetched": "see git history",
+  "counts": {
+    "greens": 0,
+    "tees": 0,
+    "fairways": 0,
+    "holeWays": 0,
+    "cartPaths": 0,
+    "bunkers": 0,
+    "water": 11
+  },
+  "holeNumbersOn": {
+    "holeWay": 0,
+    "fairway": 0,
+    "tee": 0,
+    "green": 0
+  }
+}
