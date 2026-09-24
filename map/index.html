@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Map a course · Golf Bums</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --cream:#FFFDD0; --paper:#F7F1DC; --pine:#184027; --tan:#E3B278; --card:rgb(248,200,158); --putt:#A6D48A; --brown:#5B3D17;
+    --body:'Nunito Sans',system-ui,sans-serif; --num:'Bebas Neue','Arial Narrow',sans-serif; }
+  html,body { height:100%; margin:0; }
+  [hidden] { display:none !important; }
+  body { background:var(--pine); color:var(--cream); font-family:var(--body); overflow:hidden; -webkit-user-select:none; user-select:none; }
+  .app { position:relative; height:100%; display:flex; flex-direction:column; }
+  .hdr { flex:none; padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px; text-align:center; }
+  .hdr .t { font-family:var(--num); font-size:22px; letter-spacing:.5px; }
+  .hdr .s { font-size:12px; color:rgba(243,239,199,.7); }
+  .mapwrap { position:relative; flex:1 1 0; min-height:0; }
+  #map { position:absolute; inset:0; background:#2E4A34; }
+  .leaflet-control-attribution { font-size:9px; }
+  .prompt { position:absolute; top:10px; left:12px; right:12px; z-index:600; background:rgba(24,64,39,.92); border:1px solid rgba(243,239,199,.22);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:16px; padding:10px 14px; text-align:center; }
+  .prompt .h { font-family:var(--num); font-size:26px; line-height:1; letter-spacing:.5px; }
+  .prompt .w { font-size:14px; margin-top:3px; }
+  .prompt .c { font-size:12px; color:rgba(243,239,199,.7); margin-top:2px; }
+  .bar { flex:none; display:flex; gap:8px; padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px)); }
+  button { flex:1 1 0; font:inherit; font-family:var(--num); font-size:15px; letter-spacing:.8px; text-transform:uppercase; color:var(--cream);
+    background:rgba(243,239,199,.14); border:1px solid rgba(243,239,199,.22); border-radius:300px; padding:12px 0; cursor:pointer; }
+  button.primary { background:linear-gradient(135deg,rgba(240,216,170,.95),rgba(222,184,128,.92)); color:var(--pine); border-color:transparent; }
+  button:disabled { opacity:.35; }
+  .out { position:absolute; inset:0; z-index:900; background:var(--pine); padding:20px; display:flex; flex-direction:column; gap:12px; }
+  .out textarea { flex:1 1 0; width:100%; box-sizing:border-box; background:var(--paper); color:#2B2B27; border:0; border-radius:12px; padding:12px;
+    font-family:ui-monospace,Menlo,monospace; font-size:12px; resize:none; }
+  .out .t { font-family:var(--num); font-size:22px; }
+  .pill { position:absolute; bottom:10px; left:12px; right:12px; z-index:600; display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  .pill i { width:24px; height:24px; border-radius:300px; background:rgba(247,241,220,.55); color:var(--pine); font-family:var(--num); font-size:12px;
+    display:flex; align-items:center; justify-content:center; font-style:normal; }
+  .pill i.on { background:var(--tan); } .pill i.cur { background:var(--cream); box-shadow:0 0 0 2px var(--cream); }
+  .gt { width:18px; height:18px; border-radius:300px; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.5); }
+  .lbl { font-family:var(--num); font-size:13px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.9); white-space:nowrap; transform:translate(-50%,-50%); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr"><div class="t" id="cname">Map a course</div><div class="s" id="sub">tap the tee, then the green</div></div>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="prompt"><div class="h" id="ph">Hole 1</div><div class="w" id="pw">Tap the TEE</div><div class="c" id="pc"></div></div>
+    <div class="pill" id="pills"></div>
+  </div>
+  <div class="bar">
+    <button id="undo">Undo</button>
+    <button id="skip">Skip hole</button>
+    <button class="primary" id="done" disabled>Done</button>
+  </div>
+</div>
+<div class="out" id="out" hidden>
+  <div class="t">Send this back</div>
+  <textarea id="json" readonly></textarea>
+  <button class="primary" id="copy">Copy</button>
+  <button id="back">Keep mapping</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const P = new URLSearchParams(location.search);
+const KEY = P.get('c') || 'prairie-pines';
+const $ = id => document.getElementById(id);
+
+fetch(KEY + '.json').then(r => r.json()).then(init).catch(e => { $('pw').textContent = 'Could not load ' + KEY + '.json'; });
+
+function init(D) {
+  $('cname').textContent = D.name;
+  const N = D.card.length;
+  const map = L.map('map', { zoomControl: false, attributionControl: true });
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 21, maxNativeZoom: 19, attribution: '© OpenStreetMap · Esri'
+  }).addTo(map);
+
+  const all = [];
+  D.tees.forEach(t => all.push([t.c.lat, t.c.lon]));
+  D.greens.forEach(g => all.push([g.c.lat, g.c.lon]));
+  map.fitBounds(L.latLngBounds(all), { padding: [40, 40] });
+
+  // draw every candidate, tappable
+  const teeM = [], grnM = [];
+  D.tees.forEach((t, i) => {
+    const mk = L.marker([t.c.lat, t.c.lon], { icon: L.divIcon({ className: '', html: '<div class="gt" style="background:#E3B278"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(map);
+    mk.on('click', () => pickTee(i)); teeM.push(mk);
+  });
+  D.greens.forEach((g, i) => {
+    L.polygon(g.ring.map(p => [p.lat, p.lon]), { color: '#A6D48A', weight: 2, fillOpacity: .45 }).addTo(map).on('click', () => pickGreen(i));
+    const mk = L.marker([g.c.lat, g.c.lon], { icon: L.divIcon({ className: '', html: '<div class="gt" style="background:#A6D48A"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(map);
+    mk.on('click', () => pickGreen(i)); grnM.push(mk);
+  });
+
+  const picks = [];            // [{tee, green}] per hole
+  let cur = 0, pendingTee = null, lines = [];
+
+  function yards(a, b) { return Math.round(map.distance([a.lat, a.lon], [b.lat, b.lon]) / 0.9144); }
+  function redraw() {
+    lines.forEach(l => map.removeLayer(l)); lines = [];
+    picks.forEach((p, i) => {
+      if (!p) return;
+      const t = D.tees[p.tee].c, g = D.greens[p.green].c;
+      lines.push(L.polyline([[t.lat, t.lon], [g.lat, g.lon]], { color: i === cur ? '#E74C3C' : '#FFFDD0', weight: i === cur ? 5 : 3 }).addTo(map));
+      lines.push(L.marker([(t.lat + g.lat) / 2, (t.lng || t.lon + g.lon) / 2 || (t.lon + g.lon) / 2],
+        { icon: L.divIcon({ className: '', html: '<div class="lbl">' + (i + 1) + ' · ' + yards(t, g) + '</div>', iconSize: [0, 0] }) }).addTo(map));
+    });
+    $('pills').innerHTML = D.card.map((c, i) => '<i class="' + (picks[i] ? 'on ' : '') + (i === cur ? 'cur' : '') + '">' + (i + 1) + '</i>').join('');
+    $('ph').textContent = 'Hole ' + (cur + 1);
+    const c = D.card[cur];
+    $('pc').textContent = c ? ('card says par ' + c.par + ' · ' + c.yds + ' yds') : '';
+    $('pw').textContent = pendingTee === null ? 'Tap the TEE' : 'Now tap the GREEN';
+    $('done').disabled = picks.filter(Boolean).length < 1;
+  }
+  function pickTee(i) { pendingTee = i; redraw(); }
+  function pickGreen(i) {
+    if (pendingTee === null) { $('pw').textContent = 'Tap the TEE first'; return; }
+    picks[cur] = { tee: pendingTee, green: i }; pendingTee = null;
+    cur = Math.min(N - 1, cur + 1);
+    // hop to the next unmapped hole
+    while (cur < N - 1 && picks[cur]) cur++;
+    redraw();
+  }
+  $('undo').onclick = () => { if (pendingTee !== null) { pendingTee = null; } else { if (picks[cur]) picks[cur] = null; else if (cur > 0) { cur--; picks[cur] = null; } } redraw(); };
+  $('skip').onclick = () => { cur = (cur + 1) % N; pendingTee = null; redraw(); };
+  $('done').onclick = () => {
+    const out = { course: KEY, name: D.name, holes: picks.map((p, i) => p ? { hole: i + 1, tee: D.tees[p.tee].id, green: D.greens[p.green].id, yds: yards(D.tees[p.tee].c, D.greens[p.green].c) } : null) };
+    $('json').value = JSON.stringify(out);
+    $('out').hidden = false;
+  };
+  $('copy').onclick = () => { $('json').select(); document.execCommand('copy'); $('copy').textContent = 'Copied'; setTimeout(() => $('copy').textContent = 'Copy', 1200); };
+  $('back').onclick = () => { $('out').hidden = true; };
+  redraw();
+}
+</script>
+</body>
+</html>
