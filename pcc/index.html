@@ -486,7 +486,11 @@
     const P = (pts, cls, extra) => add(L.polygon(ring(pts), Object.assign({ className: cls, interactive: false, fill: true, fillOpacity: 1, opacity: 1, noClip: true, smoothFactor: 0 }, extra || {})));
     H.forEach((h, i) => {
       if (look === 'sat') { h.fairways.forEach(r => P(r, '', SAT_ST.fw)); h.water.forEach(r => P(r, '', SAT_ST.w)); h.bunkers.forEach(r => P(r, '', SAT_ST.bk)); P(h.green.ring, '', SAT_ST.g); }
-      else { h.fairways.forEach(r => P(smooth(r), 'sk-fw')); h.water.forEach(r => P(smooth(r), 'sk-water')); h.bunkers.forEach(r => P(smooth(r), 'sk-sand')); P(smooth(h.green.ring), 'sk-green'); }
+      else {
+        // a hole the volunteers drew no fairway for gets its corridor as a stand-in band, so the routing still reads as holes and not as dots
+        if (!h.fairways.length) P(corridor(h.line, 20).map(([lat, lon]) => ({ lat, lon })), 'sk-fw');
+        h.fairways.forEach(r => P(smooth(r), 'sk-fw')); h.water.forEach(r => P(smooth(r), 'sk-water')); h.bunkers.forEach(r => P(smooth(r), 'sk-sand')); P(smooth(h.green.ring), 'sk-green');
+      }
       h.tees.forEach(x => { if (x.ring) add(L.polygon(ring(x.ring), { className: 'sk-tee', interactive: false, noClip: true, smoothFactor: 0, fill: true, fillOpacity: 1, opacity: 1 })); });
       add(L.polyline(h.line.map(p => [p.lat, p.lon]), { className: 'sk-line ovline', color: look === 'sat' ? 'rgba(243,239,199,.7)' : '#2B2B27', weight: 1.2, dashArray: '2 6', interactive: false, noClip: true }));
       // the whole corridor taps, not just the number

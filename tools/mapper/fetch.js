@@ -10,11 +10,11 @@
 const fs = require('fs'), path = require('path');
 const UA = 'golfbums-course-mapper/1.0 (seth@golfbums.co)';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const [key, query] = process.argv.slice(2);
+const [key, query, at] = process.argv.slice(2);   // optional third arg: "lat,lon" to skip the geocoder
 if (!key || !query) { console.error('usage: node fetch.js <key> "<Course Name, Town, State>"'); process.exit(1); }
 const out = path.join(__dirname, 'courses', key);
 
-const MIRRORS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const MIRRORS = ['https://maps.mail.ru/osm/tools/overpass/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter'];
 async function overpass(q) {
   for (const host of MIRRORS) {
     try {
@@ -36,7 +36,7 @@ async function geocode(q) {
   console.log(`${key}: locating "${query}"`);
   let lat = null, lon = null, matched = null;
 
-  const hits = await geocode(query);
+  const hits = at ? [{ lat: at.split(',')[0], lon: at.split(',')[1], display_name: query, class: 'leisure' }] : await geocode(query);
   const best = hits.find(h => h.class === 'leisure' || /golf/i.test(h.display_name)) || hits[0];
   if (best) { lat = Number(best.lat); lon = Number(best.lon); matched = best.display_name; }
 

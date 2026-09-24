@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Golf · Buffalo Dunes</title>
+<title>Golf · Antler Creek</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito+Sans:wght@400;600;700&family=Sansita:wght@700&family=Architects+Daughter&display=swap">
 <style>
@@ -211,7 +211,7 @@
 <div class="app">
   <div class="gate" id="gate">
     <div class="eye">Golf</div>
-    <div class="t">Buffalo Dunes</div>
+    <div class="t">Antler Creek</div>
     <p id="gatep">Par 71 · 18 holes mapped. One question, then play.</p>
     <div class="tees" id="teesel"></div>
     <button class="primary" id="start">Play · allow location</button>
@@ -281,9 +281,9 @@
   ];
   const otherHole = o => Math.max(0, Math.min(17, holeIdx + o.ahead));
   const otherToPar = o => { const h = otherHole(o); let sum = 0; for (let k = 0; k < h; k++) sum += o.tp[k]; return { thru: h, txt: h ? (sum === 0 ? 'E' : (sum > 0 ? '+' : '') + sum) : '–', s: sum }; };
-  let greenies = {}; try { greenies = JSON.parse(localStorage.getItem('pcc-greenies') || '{}'); } catch (_) {}
+  let greenies = {}; try { greenies = JSON.parse(localStorage.getItem('antler-greenies') || '{}'); } catch (_) {}
   let cardTab = 'card';
-  try { const s = JSON.parse(localStorage.getItem('pcc-scores') || 'null'); if (s && s.length === 4) s.forEach((r, i) => scores[i] = r); } catch (_) {}
+  try { const s = JSON.parse(localStorage.getItem('antler-scores') || 'null'); if (s && s.length === 4) s.forEach((r, i) => scores[i] = r); } catch (_) {}
   const fmt = m => Math.round(m / M_PER_YD);
   const ll = p => L.latLng(p.lat, p.lon !== undefined ? p.lon : p.lng);
   const bearing = (a, b) => { const e = (b.lng - a.lng) * Math.cos(a.lat * Math.PI / 180), n = b.lat - a.lat; return (Math.atan2(e, n) * 180 / Math.PI + 360) % 360; };
@@ -325,7 +325,7 @@
   }
   const holeLayers = [];
   const tiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
-  let look = 'sketch'; try { look = localStorage.getItem('pcc-look') || 'sketch'; } catch (_) {}
+  let look = 'sketch'; try { look = localStorage.getItem('antler-look') || 'sketch'; } catch (_) {}
   // a smooth curve through a ring's survey points (Catmull-Rom, 5 steps a segment)
   function smooth(r, closed = true) {
     const n = r.length, out = []; const at = i => r[((i % n) + n) % n];
@@ -391,7 +391,7 @@
     ].join('');
     svg.insertBefore(defs, svg.firstChild);
   }
-  function setLook(l) { look = l; try { localStorage.setItem('pcc-look', l); } catch (_) {} if (view === 'course') showCourse(); else drawCourse(holeIdx); }
+  function setLook(l) { look = l; try { localStorage.setItem('antler-look', l); } catch (_) {} if (view === 'course') showCourse(); else drawCourse(holeIdx); }
   document.getElementById('lookSketch').addEventListener('click', () => setLook('sketch'));
   document.getElementById('lookSat').addEventListener('click', () => setLook('sat'));
   const icon = (cls, size, html) => L.divIcon({ className: '', html: html || `<div class="${cls}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
@@ -686,8 +686,8 @@
   function openSheet(pk) { sheetFor = pk; const h = H[holeIdx]; $('sheett').textContent = `${players[pk].n} · hole ${h.hole} · par ${h.par}`; $('nums').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => `<button data-n="${n}" class="${n === h.par ? 'par' : ''}">${n}</button>`).join('');
     const g = $('gline'); if (h.par === 3) { g.hidden = false; g.innerHTML = `<div class="k">Closest to the pin · greenie</div><div class="pills">${[...players.map(p => p.n), ...cart2.map(p => p.n)].map(n => `<button data-g="${n}" class="${greenies[holeIdx] === n ? 'on' : ''}">${n}</button>`).join('')}</div>`; } else g.hidden = true;
     $('sheet').hidden = false; }
-  $('sheet').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; greenies[holeIdx] = greenies[holeIdx] === b.dataset.g ? undefined : b.dataset.g; try { localStorage.setItem('pcc-greenies', JSON.stringify(greenies)); } catch (_) {} [...$('gline').querySelectorAll('button')].forEach(x => x.classList.toggle('on', x.dataset.g === greenies[holeIdx])); });
-  $('nums').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scores[sheetFor][holeIdx] = Number(b.dataset.n); try { localStorage.setItem('pcc-scores', JSON.stringify(scores)); } catch (_) {} $('sheet').hidden = true; drawCard(); });
+  $('sheet').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; greenies[holeIdx] = greenies[holeIdx] === b.dataset.g ? undefined : b.dataset.g; try { localStorage.setItem('antler-greenies', JSON.stringify(greenies)); } catch (_) {} [...$('gline').querySelectorAll('button')].forEach(x => x.classList.toggle('on', x.dataset.g === greenies[holeIdx])); });
+  $('nums').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scores[sheetFor][holeIdx] = Number(b.dataset.n); try { localStorage.setItem('antler-scores', JSON.stringify(scores)); } catch (_) {} $('sheet').hidden = true; drawCard(); });
   $('sheetx').addEventListener('click', () => { $('sheet').hidden = true; });
   $('card').addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b) openSheet(Number(b.dataset.p)); });
   $('scorebtn2').addEventListener('click', () => { $('card').hidden = true; openSheet(0); });

@@ -1,0 +1,282 @@
+{
+  "key": "antler-creek",
+  "course": "Antler Creek Golf Course \u2014 9650 Antler Creek Dr, Peyton, CO 80831, USA",
+  "found": true,
+  "holeCount": 18,
+  "par": 72,
+  "source": "OpenGolfAPI /api/v1/courses/0032f4d2-ded4-47a1-b9c5-d6684dde7f3e (ODbL); pars and handicaps agree with the OSM golf=hole tags",
+  "teeSets": [
+    {
+      "name": "Black",
+      "totalYards": 8058,
+      "rating": 77.4,
+      "slope": 146
+    },
+    {
+      "name": "Gold",
+      "totalYards": 7491,
+      "rating": 74.8,
+      "slope": 138
+    },
+    {
+      "name": "Blue",
+      "totalYards": 7007,
+      "rating": 72.8,
+      "slope": 131
+    },
+    {
+      "name": "White",
+      "totalYards": 6409,
+      "rating": 75.3,
+      "slope": 146
+    },
+    {
+      "name": "Yellow",
+      "totalYards": 5901,
+      "rating": 72.8,
+      "slope": 136
+    },
+    {
+      "name": "Green",
+      "totalYards": 5393,
+      "rating": 64.6,
+      "slope": 113
+    }
+  ],
+  "holes": [
+    {
+      "hole": 1,
+      "par": 4,
+      "handicap": 18,
+      "yardsByTee": {
+        "Black": 458,
+        "Gold": 409,
+        "Blue": 376,
+        "White": 332,
+        "Yellow": 310,
+        "Green": 268
+      }
+    },
+    {
+      "hole": 2,
+      "par": 5,
+      "handicap": 12,
+      "yardsByTee": {
+        "Black": 604,
+        "Gold": 547,
+        "Blue": 513,
+        "White": 479,
+        "Yellow": 456,
+        "Green": 427
+      }
+    },
+    {
+      "hole": 3,
+      "par": 4,
+      "handicap": 6,
+      "yardsByTee": {
+        "Black": 437,
+        "Gold": 417,
+        "Blue": 387,
+        "White": 355,
+        "Yellow": 324,
+        "Green": 296
+      }
+    },
+    {
+      "hole": 4,
+      "par": 4,
+      "handicap": 14,
+      "yardsByTee": {
+        "Black": 449,
+        "Gold": 424,
+        "Blue": 386,
+        "White": 349,
+        "Yellow": 314,
+        "Green": 293
+      }
+    },
+    {
+      "hole": 5,
+      "par": 3,
+      "handicap": 8,
+      "yardsByTee": {
+        "Black": 245,
+        "Gold": 226,
+        "Blue": 206,
+        "White": 158,
+        "Yellow": 134,
+        "Green": 128
+      }
+    },
+    {
+      "hole": 6,
+      "par": 4,
+      "handicap": 10,
+      "yardsByTee": {
+        "Black": 483,
+        "Gold": 442,
+        "Blue": 415,
+        "White": 391,
+        "Yellow": 356,
+        "Green": 320
+      }
+    },
+    {
+      "hole": 7,
+      "par": 5,
+      "handicap": 2,
+      "yardsByTee": {
+        "Black": 659,
+        "Gold": 616,
+        "Blue": 594,
+        "White": 562,
+        "Yellow": 527,
+        "Green": 493
+      }
+    },
+    {
+      "hole": 8,
+      "par": 3,
+      "handicap": 16,
+      "yardsByTee": {
+        "Black": 209,
+        "Gold": 170,
+        "Blue": 161,
+        "White": 145,
+        "Yellow": 116,
+        "Green": 95
+      }
+    },
+    {
+      "hole": 9,
+      "par": 4,
+      "handicap": 4,
+      "yardsByTee": {
+        "Black": 479,
+        "Gold": 448,
+        "Blue": 431,
+        "White": 399,
+        "Yellow": 374,
+        "Green": 345
+      }
+    },
+    {
+      "hole": 10,
+      "par": 5,
+      "handicap": 3,
+      "yardsByTee": {
+        "Black": 654,
+        "Gold": 639,
+        "Blue": 605,
+        "White": 567,
+        "Yellow": 544,
+        "Green": 514
+      }
+    },
+    {
+      "hole": 11,
+      "par": 4,
+      "handicap": 5,
+      "yardsByTee": {
+        "Black": 417,
+        "Gold": 415,
+        "Blue": 396,
+        "White": 354,
+        "Yellow": 325,
+        "Green": 297
+      }
+    },
+    {
+      "hole": 12,
+      "par": 4,
+      "handicap": 1,
+      "yardsByTee": {
+        "Black": 538,
+        "Gold": 481,
+        "Blue": 449,
+        "White": 417,
+        "Yellow": 388,
+        "Green": 358
+      }
+    },
+    {
+      "hole": 13,
+      "par": 3,
+      "handicap": 15,
+      "yardsByTee": {
+        "Black": 181,
+        "Gold": 175,
+        "Blue": 181,
+        "White": 141,
+        "Yellow": 125,
+        "Green": 104
+      }
+    },
+    {
+      "hole": 14,
+      "par": 4,
+      "handicap": 11,
+      "yardsByTee": {
+        "Black": 477,
+        "Gold": 437,
+        "Blue": 385,
+        "White": 355,
+        "Yellow": 320,
+        "Green": 293
+      }
+    },
+    {
+      "hole": 15,
+      "par": 5,
+      "handicap": 7,
+      "yardsByTee": {
+        "Black": 695,
+        "Gold": 666,
+        "Blue": 621,
+        "White": 580,
+        "Yellow": 547,
+        "Green": 518
+      }
+    },
+    {
+      "hole": 16,
+      "par": 4,
+      "handicap": 17,
+      "yardsByTee": {
+        "Black": 417,
+        "Gold": 408,
+        "Blue": 385,
+        "White": 352,
+        "Yellow": 324,
+        "Green": 289
+      }
+    },
+    {
+      "hole": 17,
+      "par": 3,
+      "handicap": 9,
+      "yardsByTee": {
+        "Black": 229,
+        "Gold": 197,
+        "Blue": 164,
+        "White": 154,
+        "Yellow": 133,
+        "Green": 95
+      }
+    },
+    {
+      "hole": 18,
+      "par": 4,
+      "handicap": 13,
+      "yardsByTee": {
+        "Black": 432,
+        "Gold": 388,
+        "Blue": 367,
+        "White": 337,
+        "Yellow": 284,
+        "Green": 260
+      }
+    }
+  ]
+}

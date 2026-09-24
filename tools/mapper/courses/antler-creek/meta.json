@@ -1,0 +1,23 @@
+{
+  "key": "antler-creek",
+  "query": "Antler Creek Golf Course, Colorado Springs, Colorado",
+  "matchedName": "Antler Creek Golf Course",
+  "lat": 38.974155,
+  "lon": -104.5995674,
+  "fetched": "see git history",
+  "counts": {
+    "greens": 18,
+    "tees": 102,
+    "fairways": 5,
+    "holeWays": 18,
+    "cartPaths": 50,
+    "bunkers": 60,
+    "water": 15
+  },
+  "holeNumbersOn": {
+    "holeWay": 18,
+    "fairway": 0,
+    "tee": 0,
+    "green": 0
+  }
+}

@@ -11,14 +11,15 @@ course a golfer taps in two minutes. A course it gets confidently wrong costs tr
 |---|---|---|---|---|---|---|
 | prairie-pines | 9 | **PASS** | 21 yd | greens 9/9, holes 9/9 | fairway `ref` | Johnson City KS. Routing confirmed by ogbum in the tap-mapper. OSM had the hole numbers on the fairways. Cart paths settled the par-3 tee. |
 | buffalo-dunes | 18 | **FAIL** | 84 yd | — | `golf=hole` ref | Garden City KS. Correctly refused: the OSM data is the **pre-2021** course. Renovated 2021–26, nines swapped, three greens moved. Matches the old card at 21 yd median, in order. Needs fresher aerial before it can pass. |
+| antler-creek | 18 | **PASS** | 24 yd | — (no golfer-confirmed truth yet) | `golf=hole` ref | Peyton CO (Colorado Springs). All 18 hole ways numbered by the volunteers; card from OpenGolfAPI (six tee sets, per-hole yardages, handicaps agree with the OSM tags). Worst hole 12 at 81 yd is a dogleg measured straight — expected. **OSM has fairways for only 5 of 18 holes**, so the Sketch look draws a corridor band on the other 13 until the photo mapper fills them in. Page: /antler-creek/. |
 
 ## Running totals
 
-- Courses resolved: **2**
+- Courses resolved: **3**
 - With a golfer-confirmed routing to check against: **1**
 - Holes correct where truth exists: **9/9**
 - **Said PASS while wrong: 0** ✓
-- Confirmed courses still needed before the accuracy number means anything: **19**
+- Confirmed courses still needed before the accuracy number means anything: **19** (Antler Creek is Seth's home turf — a round there with the page open is the cheapest confirmation)
 
 ## What each verdict cost to produce
 
