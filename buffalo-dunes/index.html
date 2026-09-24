@@ -195,6 +195,16 @@
   .gate #browse { flex: none; padding: 12px 26px; }
   .gate .err { color: var(--tan); font-size: 14px; max-width: 36ch; }
   .gate .fine { font-size: 12px; color: rgba(243,239,199,.6); }
+  /* ── Course view: every hole on one sheet ─────────────────────────────── */
+  .rail .c.all, #map.sketch ~ .rail .c.all, #map.sat ~ .rail .c.all { font-family: var(--num); font-size: 8.5px; letter-spacing: .3px; padding-top: 1px; }
+  .hnum { width: 22px; height: 22px; border-radius: 300px; display: flex; align-items: center; justify-content: center; font-family: var(--num); font-size: 12px; line-height: 1; padding-top: 1px; color: var(--cream); background: var(--pine); border: 1.5px solid var(--cream); box-shadow: 0 1px 3px rgba(0,0,0,.35); cursor: pointer; }
+  #map.sketch .hnum { font-family: var(--hand); font-size: 13px; padding-top: 0; color: #2B2B27; background: #F7F1DC; border: 1.6px solid #2B2B27; box-shadow: none; }
+  /* the pencil filters are per shape; eighteen holes of them is too slow at course zoom, and too small to read anyway */
+  #map.ov path { filter: none !important; }
+  #map.ov path.ovline { stroke-width: 1.2; opacity: .6; }
+  .pill .t { cursor: pointer; }
+  .pill.course .t { letter-spacing: 1px; }
+  .pill .arw.off { visibility: hidden; }
 </style>
 </head>
 <body>
@@ -381,7 +391,7 @@
     ].join('');
     svg.insertBefore(defs, svg.firstChild);
   }
-  function setLook(l) { look = l; try { localStorage.setItem('pcc-look', l); } catch (_) {} drawCourse(holeIdx); }
+  function setLook(l) { look = l; try { localStorage.setItem('pcc-look', l); } catch (_) {} if (view === 'course') showCourse(); else drawCourse(holeIdx); }
   document.getElementById('lookSketch').addEventListener('click', () => setLook('sketch'));
   document.getElementById('lookSat').addEventListener('click', () => setLook('sat'));
   const icon = (cls, size, html) => L.divIcon({ className: '', html: html || `<div class="${cls}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
@@ -465,12 +475,82 @@
     others.forEach(o => { if (otherHole(o) === hole) out.push([o.n, otherToPar(o).txt]); });
     return out;
   }
+  // ── Course view: every hole on one sheet, north up, numbered at the back tee. ────────
+  // Tap a hole (its number or its corridor) to play it; the rail's ALL disc and the pill's
+  // title get you back here. The pencil filters are off at this zoom — see #map.ov.
+  let view = 'hole';
+  const SAT_ST = { fw: { color: '#FFFDD0', weight: 1.2, opacity: .55, fill: true, fillColor: '#A6D48A', fillOpacity: .10 }, bk: { color: '#F0D8AA', weight: 1.2, fill: true, fillColor: '#F0D8AA', fillOpacity: .35 }, w: { color: '#F3EFC7', weight: 1.2, dashArray: '5 4', fill: true, fillColor: '#3A6B5A', fillOpacity: .25 }, g: { color: '#A6D48A', weight: 3, fill: true, fillColor: '#A6D48A', fillOpacity: .28 } };
+  function courseBounds() { const b = L.latLngBounds([]); H.forEach(h => { h.green.ring.forEach(p => b.extend(ll(p))); h.tees.forEach(t => b.extend(ll(t.center))); h.fairways.forEach(r => r.forEach(p => b.extend(ll(p)))); }); return b; }
+  function overviewMe() { if (!me) return; const p = L.latLng(me.lat, me.lng); drop('ring'); upsert('me', p, { icon: icon('me-dot', 18) }); }
+  function drawOverview() {
+    holeLayers.forEach(l => map.removeLayer(l)); holeLayers.length = 0;
+    ['flag', 'origin', 'ray', 'ray2', 'tgt', 'glab', 'tlab', 'cart', 'cartlab', 'line'].forEach(drop); for (let k = 0; k < 3; k++) { drop('solo' + k); drop('sololab' + k); }
+    for (let k = 0; k < H.length; k++) drop('hn' + k);
+    $('map').className = look + ' ov'; document.getElementById('lookSketch').classList.toggle('on', look === 'sketch'); document.getElementById('lookSat').classList.toggle('on', look === 'sat');
+    if (look === 'sketch') sketchDefs();
+    const add = l => { l.addTo(map); holeLayers.push(l); return l; };
+    const P = (pts, cls, extra) => add(L.polygon(ring(pts), Object.assign({ className: cls, interactive: false, fill: true, fillOpacity: 1, opacity: 1, noClip: true, smoothFactor: 0 }, extra || {})));
+    H.forEach((h, i) => {
+      if (look === 'sat') { h.fairways.forEach(r => P(r, '', SAT_ST.fw)); h.water.forEach(r => P(r, '', SAT_ST.w)); h.bunkers.forEach(r => P(r, '', SAT_ST.bk)); P(h.green.ring, '', SAT_ST.g); }
+      else { h.fairways.forEach(r => P(smooth(r), 'sk-fw')); h.water.forEach(r => P(smooth(r), 'sk-water')); h.bunkers.forEach(r => P(smooth(r), 'sk-sand')); P(smooth(h.green.ring), 'sk-green'); }
+      h.tees.forEach(x => { if (x.ring) add(L.polygon(ring(x.ring), { className: 'sk-tee', interactive: false, noClip: true, smoothFactor: 0, fill: true, fillOpacity: 1, opacity: 1 })); });
+      add(L.polyline(h.line.map(p => [p.lat, p.lon]), { className: 'sk-line ovline', color: look === 'sat' ? 'rgba(243,239,199,.7)' : '#2B2B27', weight: 1.2, dashArray: '2 6', interactive: false, noClip: true }));
+      // the whole corridor taps, not just the number
+      add(L.polygon(corridor(h.line, 30), { stroke: false, fill: true, fillOpacity: 0, interactive: true, noClip: true, smoothFactor: 0 })).on('click', () => showHole(i));
+      // the number sits 14 m behind the back tee, so it never covers the tee box
+    });
+    // Turn the sheet so the course's long axis runs up the phone, the way a yardage book
+    // lays a course on its page, with hole 1 playing upward. Then fit the whole course.
+    programmatic = true; setTimeout(() => { programmatic = false; }, 900);
+    const pts = []; H.forEach(h => { h.green.ring.forEach(p => pts.push(p)); h.tees.forEach(t => pts.push(t.center)); h.fairways.forEach(r => r.forEach(p => pts.push(p))); });
+    const numAt = h => { const t = h.tees[0].center, g = h.green.center; const br = (bearing(ll(t), ll(g)) + 180) * Math.PI / 180; return L.latLng(t.lat + Math.cos(br) * 18 / 111320, t.lon + Math.sin(br) * 18 / (111320 * Math.cos(t.lat * Math.PI / 180))); };
+    const fitPts = pts.concat(H.map(h => { const a = numAt(h); return { lat: a.lat, lon: a.lng }; }));
+    const o = pts[0], kx = 111320 * Math.cos(o.lat * Math.PI / 180), ky = 111320;
+    const xy = pts.map(p => ({ x: (p.lon - o.lon) * kx, y: (p.lat - o.lat) * ky })); const mx = xy.reduce((s, p) => s + p.x, 0) / xy.length, my = xy.reduce((s, p) => s + p.y, 0) / xy.length;
+    let sxx = 0, sxy = 0, syy = 0; xy.forEach(p => { const dx = p.x - mx, dy = p.y - my; sxx += dx * dx; sxy += dx * dy; syy += dy * dy; });
+    // eigenvalues of the point cloud: how much longer the course is than it is wide
+    const tr = sxx + syy, det = sxx * syy - sxy * sxy, disc = Math.sqrt(Math.max(0, tr * tr / 4 - det)); const elong = Math.sqrt((tr / 2 + disc) / Math.max(1e-9, tr / 2 - disc));
+    let axis = (Math.atan2(2 * sxy, sxx - syy) / 2) * 180 / Math.PI; axis = (90 - axis + 360) % 360; // compass bearing of the long axis
+    const first = bearing(ll(H[0].tees[0].center), ll(H[0].green.center)); if (Math.abs(((first - axis + 540) % 360) - 180) >= 90) axis = (axis + 180) % 360;
+    map.options.zoomSnap = 0.05; map.setBearing(elong > 1.3 ? -axis : 0);
+    // fit by measuring the (rotated) course on screen: Leaflet's own fitBounds ignores the bearing
+    const fit = () => { const sz = map.getSize(); const cp = fitPts.map(p => map.latLngToContainerPoint(ll(p))); const x0 = Math.min(...cp.map(p => p.x)), x1 = Math.max(...cp.map(p => p.x)), y0 = Math.min(...cp.map(p => p.y)), y1 = Math.max(...cp.map(p => p.y));
+      const padL = 55, padR = 27, padT = 81, padB = 107; /* the rail, the bar, and 11px for the discs' own radius */ const s = Math.min((sz.x - padL - padR) / Math.max(1, x1 - x0), (sz.y - padT - padB) / Math.max(1, y1 - y0));
+      const z = Math.min(19, map.getZoom() + Math.log2(s)); const c = map.containerPointToLatLng(L.point((x0 + x1) / 2, (y0 + y1) / 2));
+      map.setView(c, z, { animate: false }); };
+    fit(); fit(); // twice: the second pass corrects for the zoom change moving the padded centre
+    { const sz = map.getSize(); const cp = fitPts.map(p => map.latLngToContainerPoint(ll(p))); const x0 = Math.min(...cp.map(p => p.x)), x1 = Math.max(...cp.map(p => p.x)), y0 = Math.min(...cp.map(p => p.y)), y1 = Math.max(...cp.map(p => p.y));
+      // slide so the padding is honoured: the rail on the left, the yardage bar at the bottom
+      const want = L.point((55 + sz.x - 27) / 2, (81 + sz.y - 107) / 2), have = L.point((x0 + x1) / 2, (y0 + y1) / 2); map.panBy(have.subtract(want), { animate: false }); }
+    // numbers: 18 m behind each back tee; any two closer than 26 px on screen are pushed apart
+    // along the line between them, so shared tee corners (1/10, 9/18) stay legible
+    const spots = H.map(h => map.latLngToLayerPoint(numAt(h)));
+    for (let pass = 0; pass < 6; pass++) for (let a = 0; a < spots.length; a++) for (let b = a + 1; b < spots.length; b++) {
+      const dx = spots[b].x - spots[a].x, dy = spots[b].y - spots[a].y, d = Math.hypot(dx, dy); if (d >= 26) continue;
+      const push = (26 - d) / 2 + 0.5; const ux = d < 0.5 ? 1 : dx / d, uy = d < 0.5 ? 0 : dy / d;
+      spots[a] = L.point(spots[a].x - ux * push, spots[a].y - uy * push); spots[b] = L.point(spots[b].x + ux * push, spots[b].y + uy * push);
+    }
+    H.forEach((h, i) => {
+      L_['hn' + i] = L.marker(map.layerPointToLatLng(spots[i]), { icon: L.divIcon({ className: '', html: `<div class="hnum">${h.hole}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }), interactive: true, zIndexOffset: 1000 }).addTo(map);
+      L_['hn' + i].on('click', () => showHole(i));
+    });
+    overviewMe();
+  }
+  function showCourse() {
+    view = 'course'; target = null; drawOverview(); drawRail();
+    $('pillt').textContent = C.name; $('pillt').parentElement.classList.add('course'); $('prev').classList.add('off'); $('next').classList.add('off');
+    const par = H.reduce((s, h) => s + h.par, 0), yds = H.reduce((s, h) => s + (teeOf(h).yds || 0), 0);
+    $('fmb').innerHTML = `<span><small>PAR</small> ${par}</span><b>${yds.toLocaleString()}</b><span>${teeNames[Math.min(teeIdx, maxTees - 1)]} tees</span>`;
+    $('grp').hidden = true; $('pop').hidden = true; $('sub').style.display = 'none';
+  }
+  function showHole(i) { holeIdx = i; drawHole(); }
   function drawRail() {
     const rail = $('rail');
-    rail.innerHTML = [...Array(N).keys()].map(k => { const who = whoOn(k); const cls = k === holeIdx ? 'me' : (who.length ? 'on' : ''); return `<div class="c ${cls}" data-h="${k}">${k + 1}</div>`; }).join('');
-    rail.onclick = e => { const el = e.target.closest('.c'); if (!el) return; e.stopPropagation(); const k = Number(el.dataset.h); const who = whoOn(k); if (!who.length) { $('pop').hidden = true; return; } popover((k === holeIdx ? 'your hole' : 'hole ' + (k + 1)) + ' · ' + who.length + (who.length === 1 ? ' bum' : ' bums'), who); };
+    rail.innerHTML = [...Array(N).keys()].map(k => { const who = whoOn(k); const cls = view === 'hole' && k === holeIdx ? 'me' : (who.length ? 'on' : ''); return `<div class="c ${cls}" data-h="${k}">${k + 1}</div>`; }).join('') + `<div class=\"c all${view === 'course' ? ' me' : ''}\" data-h=\"all\">ALL</div>`;
+    rail.onclick = e => { const el = e.target.closest('.c'); if (!el) return; e.stopPropagation(); if (el.dataset.h === 'all') { if (view === 'course') showHole(holeIdx); else showCourse(); return; } const k = Number(el.dataset.h); if (view === 'course') { showHole(k); return; } const who = whoOn(k); if (!who.length) { $('pop').hidden = true; return; } popover((k === holeIdx ? 'your hole' : 'hole ' + (k + 1)) + ' · ' + who.length + (who.length === 1 ? ' bum' : ' bums'), who); };
   }
   function drawHole() {
+    view = 'hole'; for (let k = 0; k < H.length; k++) drop('hn' + k); $('pillt').parentElement.classList.remove('course'); $('prev').classList.remove('off'); $('next').classList.remove('off'); $('sub').style.display = '';
     const h = H[holeIdx]; const t = teeOf(h); drawCourse(holeIdx); fillCart2(); drawOthers(); drawSolo(); drawRail();
     $('pillt').textContent = `${h.hole} · Par ${h.par} · ${t.yds}`;
     const rise = h.green.elev !== null && t.elev !== null ? Math.round(h.green.elev - t.elev) : null;
@@ -489,6 +569,7 @@
   }
   const onHole = (p, h) => distToLine({ lat: p.lat, lon: p.lng }, h.line) < 90;
   function redraw() {
+    if (view === 'course') { overviewMe(); return; }
     const h = H[holeIdx]; const g = ll(h.green.center);
     if (me && onHole(L.latLng(me.lat, me.lng), h)) {
       drop('origin');
@@ -613,8 +694,9 @@
     if (target && map.latLngToContainerPoint(target).distanceTo(map.latLngToContainerPoint(e.latlng)) < 28) { target = null; framed = false; redraw(); return; }
     target = e.latlng; redraw(); frameApproach();
   });
-  $('prev').addEventListener('click', () => { holeIdx = (holeIdx + N - 1) % N; drawHole(); });
-  $('next').addEventListener('click', () => { holeIdx = (holeIdx + 1) % N; drawHole(); });
+  $('prev').addEventListener('click', () => { if (view === 'course') return; holeIdx = (holeIdx + N - 1) % N; drawHole(); });
+  $('next').addEventListener('click', () => { if (view === 'course') return; holeIdx = (holeIdx + 1) % N; drawHole(); });
+  $('pillt').addEventListener('click', () => { if (view === 'hole') showCourse(); else showHole(holeIdx); });
   map.on('dragstart', () => { framed = true; userView = true; });
 
   // USGS elevation under you, at most every 5 s / 5 m
@@ -627,8 +709,8 @@
     if (!me) me = { lat: raw.lat, lng: raw.lng, acc: raw.acc, elevUSGS: null };
     else { const d = L.latLng(me.lat, me.lng).distanceTo([raw.lat, raw.lng]); const moving = (raw.speed != null && raw.speed > 0.6) || d > Math.max(raw.acc, me.acc, 4) * 1.2; const w = moving ? 0.7 : Math.min(0.25, 0.12 * (me.acc / Math.max(raw.acc, 1))); me.lat += (raw.lat - me.lat) * w; me.lng += (raw.lng - me.lng) * w; me.acc = moving ? raw.acc : Math.min(me.acc * 0.97 + raw.acc * 0.03, raw.acc * 1.5); }
     const p = L.latLng(me.lat, me.lng);
-    if (!started) { started = true; frames = 0; map.invalidateSize(); const hi = detectHole(p); if (onHole(p, H[hi])) holeIdx = hi; drawHole(); }
-    else { const hi = detectHole(p); if (hi !== holeIdx && onHole(p, H[hi]) && p.distanceTo(ll(H[holeIdx].green.center)) > 40) { holeIdx = hi; drawHole(); } }
+    if (!started) { started = true; frames = 0; map.invalidateSize(); const hi = detectHole(p); if (onHole(p, H[hi])) holeIdx = hi; if (view === 'course') overviewMe(); else drawHole(); }
+    else { const hi = detectHole(p); if (view === 'hole' && hi !== holeIdx && onHole(p, H[hi]) && p.distanceTo(ll(H[holeIdx].green.center)) > 40) { holeIdx = hi; drawHole(); } }
     const now = Date.now(); if (now - lastU > 5000 && (!lastUP || p.distanceTo(lastUP) > 5)) { lastU = now; lastUP = p; usgs(p).then(v => { if (me) { me.elevUSGS = v; redraw(); } }); }
     $('hint').textContent = `hole ${H[holeIdx].hole} — found by GPS`;
     redraw();
