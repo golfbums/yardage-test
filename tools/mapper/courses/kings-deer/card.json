@@ -1,0 +1,234 @@
+{
+  "key": "kings-deer",
+  "course": "Kings Deer Golf Club \u2014 19255 Royal Troon Dr, Monument, CO 80132, USA",
+  "found": true,
+  "holeCount": 18,
+  "par": 71,
+  "source": "OpenGolfAPI /api/v1/courses/13ca9b4c-6dad-4b4a-8f21-28ae564828a8 (ODbL)",
+  "teeSets": [
+    {
+      "name": "Gold",
+      "totalYards": 6711,
+      "rating": 71.4,
+      "slope": 133
+    },
+    {
+      "name": "Blue",
+      "totalYards": 6168,
+      "rating": 69.3,
+      "slope": 124
+    },
+    {
+      "name": "White",
+      "totalYards": 5596,
+      "rating": 66.7,
+      "slope": 118
+    },
+    {
+      "name": "Red",
+      "totalYards": 5054,
+      "rating": 68.9,
+      "slope": 124
+    }
+  ],
+  "holes": [
+    {
+      "hole": 1,
+      "par": 4,
+      "handicap": 9,
+      "yardsByTee": {
+        "Gold": 437,
+        "Blue": 387,
+        "White": 362,
+        "Red": 334
+      }
+    },
+    {
+      "hole": 2,
+      "par": 3,
+      "handicap": 15,
+      "yardsByTee": {
+        "Gold": 167,
+        "Blue": 155,
+        "White": 127,
+        "Red": 113
+      }
+    },
+    {
+      "hole": 3,
+      "par": 4,
+      "handicap": 1,
+      "yardsByTee": {
+        "Gold": 454,
+        "Blue": 418,
+        "White": 377,
+        "Red": 349
+      }
+    },
+    {
+      "hole": 4,
+      "par": 4,
+      "handicap": 7,
+      "yardsByTee": {
+        "Gold": 340,
+        "Blue": 295,
+        "White": 265,
+        "Red": 239
+      }
+    },
+    {
+      "hole": 5,
+      "par": 5,
+      "handicap": 11,
+      "yardsByTee": {
+        "Gold": 502,
+        "Blue": 448,
+        "White": 415,
+        "Red": 400
+      }
+    },
+    {
+      "hole": 6,
+      "par": 3,
+      "handicap": 5,
+      "yardsByTee": {
+        "Gold": 205,
+        "Blue": 193,
+        "White": 181,
+        "Red": 145
+      }
+    },
+    {
+      "hole": 7,
+      "par": 5,
+      "handicap": 3,
+      "yardsByTee": {
+        "Gold": 568,
+        "Blue": 535,
+        "White": 506,
+        "Red": 486
+      }
+    },
+    {
+      "hole": 8,
+      "par": 4,
+      "handicap": 13,
+      "yardsByTee": {
+        "Gold": 343,
+        "Blue": 327,
+        "White": 303,
+        "Red": 284
+      }
+    },
+    {
+      "hole": 9,
+      "par": 3,
+      "handicap": 17,
+      "yardsByTee": {
+        "Gold": 170,
+        "Blue": 151,
+        "White": 133,
+        "Red": 115
+      }
+    },
+    {
+      "hole": 10,
+      "par": 5,
+      "handicap": 6,
+      "yardsByTee": {
+        "Gold": 551,
+        "Blue": 535,
+        "White": 501,
+        "Red": 460
+      }
+    },
+    {
+      "hole": 11,
+      "par": 4,
+      "handicap": 16,
+      "yardsByTee": {
+        "Gold": 413,
+        "Blue": 382,
+        "White": 350,
+        "Red": 324
+      }
+    },
+    {
+      "hole": 12,
+      "par": 4,
+      "handicap": 8,
+      "yardsByTee": {
+        "Gold": 450,
+        "Blue": 422,
+        "White": 365,
+        "Red": 319
+      }
+    },
+    {
+      "hole": 13,
+      "par": 4,
+      "handicap": 14,
+      "yardsByTee": {
+        "Gold": 332,
+        "Blue": 295,
+        "White": 274,
+        "Red": 232
+      }
+    },
+    {
+      "hole": 14,
+      "par": 5,
+      "handicap": 4,
+      "yardsByTee": {
+        "Gold": 570,
+        "Blue": 514,
+        "White": 486,
+        "Red": 457
+      }
+    },
+    {
+      "hole": 15,
+      "par": 3,
+      "handicap": 10,
+      "yardsByTee": {
+        "Gold": 234,
+        "Blue": 210,
+        "White": 186,
+        "Red": 161
+      }
+    },
+    {
+      "hole": 16,
+      "par": 4,
+      "handicap": 2,
+      "yardsByTee": {
+        "Gold": 425,
+        "Blue": 398,
+        "White": 362,
+        "Red": 290
+      }
+    },
+    {
+      "hole": 17,
+      "par": 3,
+      "handicap": 18,
+      "yardsByTee": {
+        "Gold": 149,
+        "Blue": 122,
+        "White": 107,
+        "Red": 89
+      }
+    },
+    {
+      "hole": 18,
+      "par": 4,
+      "handicap": 12,
+      "yardsByTee": {
+        "Gold": 370,
+        "Blue": 352,
+        "White": 277,
+        "Red": 250
+      }
+    }
+  ]
+}

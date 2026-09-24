@@ -67,13 +67,16 @@ const holes = routing.holes.map(rh => {
   else line = [P(t0.c), P(gc)];
   // every tee pad that belongs to this hole: nearest to this hole's start, back to front
   const start = line[0];
-  const mine = tees.filter(t => { const dS = m(t.c, start); if (dS > 140) return false; const nearest = holeWays.length ? holeWays.slice().sort((a, b) => distToLine(t.c, a.line) - distToLine(t.c, b.line))[0] : null; return !nearest || nearest.ref === n || m(t.c, t0.c) < 60; })
+  // routing may name this hole's pads outright (tier-2 routing read from the photo); else take the nearby pads
+  const mine = rh.tees ? rh.tees.map(id => tees.find(x => x.id === id)).filter(Boolean).sort((a, b) => m(b.c, gc) - m(a.c, gc)) : tees.filter(t => { const dS = m(t.c, start); if (dS > 140) return false; const nearest = holeWays.length ? holeWays.slice().sort((a, b) => distToLine(t.c, a.line) - distToLine(t.c, b.line))[0] : null; return !nearest || nearest.ref === n || m(t.c, t0.c) < 60; })
     .sort((a, b) => m(b.c, gc) - m(a.c, gc)).slice(0, 6);
   if (!mine.find(t => t.id === t0.id)) mine.unshift(t0);
   const ch = cardHole(n);
-  const teesOut = mine.map(t => {
+  // one pad per tee set, back to front: colour them in card order; otherwise nearest card yardage
+  const inOrder = rh.tees && ch.yardsByTee && mine.length === teeNames.length;
+  const teesOut = mine.map((t, i) => {
     const yds = yd(m(t.c, gc));
-    let color = null; if (ch.yardsByTee) { const best = teeNames.map(nm => ({ nm, d: Math.abs(ch.yardsByTee[nm] - yds) })).sort((a, b) => a.d - b.d)[0]; if (best && best.d <= 30) color = best.nm.toLowerCase(); }
+    let color = null; if (inOrder) color = teeNames[i].toLowerCase(); else if (ch.yardsByTee) { const best = teeNames.map(nm => ({ nm, d: Math.abs(ch.yardsByTee[nm] - yds) })).sort((a, b) => a.d - b.d)[0]; if (best && best.d <= 30) color = best.nm.toLowerCase(); }
     return { center: P(t.c), color, yds, elev: null, ring: t.ring };
   });
   const approachFrom = line.length >= 2 ? line[line.length - 2] : P(t0.c);
