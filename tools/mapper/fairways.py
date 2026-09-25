@@ -42,7 +42,8 @@ def outline(hole, cache):
     dlat, dlon = MARGIN / mlat, MARGIN / mlon
     Y0, Y1, X0, X1 = min(lats) - dlat, max(lats) + dlat, min(lons) - dlon, max(lons) + dlon
     W = int(round((X1 - X0) * mlon / MPP)); H = int(round((Y1 - Y0) * mlat / MPP))
-    tif = os.path.join(cache, f"hole{hole['hole']}.tif")
+    # the cache name carries the box, so a hole whose tee or green moved fetches its new photo
+    tif = os.path.join(cache, f"hole{hole['hole']}_{X0:.5f}_{Y0:.5f}_{X1:.5f}_{Y1:.5f}.tif")
     fetch((X0, Y0, X1, Y1), W, H, tif)
     a = np.array(Image.open(tif)).astype(np.float32)
     if a.ndim != 3 or a.shape[2] < 4: raise SystemExit(f"hole {hole['hole']}: photo is not 4-band")

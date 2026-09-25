@@ -42,19 +42,17 @@
   "hole": 4,
   "par": 5,
   "polys": 1,
-  "yds2": 1134,
-  "pass": "strict",
+  "yds2": 3563,
+  "pass": "loose",
   "components_on_line": {
-   "4": 88,
-   "6": 8,
-   "7": 20,
-   "8": 3,
-   "9": 7
+   "14": 24,
+   "15": 9,
+   "16": 120
   },
   "kept": [
-   4
+   16
   ],
-  "samples": 373
+  "samples": 364
  },
  {
   "hole": 5,
@@ -74,17 +72,16 @@
   "hole": 6,
   "par": 4,
   "polys": 1,
-  "yds2": 6266,
-  "pass": "loose",
+  "yds2": 3083,
+  "pass": "strict",
   "components_on_line": {
-   "2": 42,
-   "11": 7,
-   "13": 5
+   "5": 51,
+   "8": 30
   },
   "kept": [
-   2
+   5
   ],
-  "samples": 316
+  "samples": 294
  },
  {
   "hole": 7,
