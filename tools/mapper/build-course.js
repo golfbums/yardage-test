@@ -68,7 +68,7 @@ const holes = routing.holes.map(rh => {
   // every tee pad that belongs to this hole: nearest to this hole's start, back to front
   const start = line[0];
   // routing may name this hole's pads outright (tier-2 routing read from the photo); else take the nearby pads
-  const mine = rh.tees ? rh.tees.map(id => tees.find(x => x.id === id)).filter(Boolean).sort((a, b) => m(b.c, gc) - m(a.c, gc)) : tees.filter(t => { const dS = m(t.c, start); if (dS > 140) return false; const nearest = holeWays.length ? holeWays.slice().sort((a, b) => distToLine(t.c, a.line) - distToLine(t.c, b.line))[0] : null; return !nearest || nearest.ref === n || m(t.c, t0.c) < 60; })
+  const mine = rh.tees ? rh.tees.map(id => tees.find(x => x.id === id)).filter(Boolean).sort((a, b) => m(b.c, gc) - m(a.c, gc)) : tees.filter(t => { const dS = m(t.c, start); if (dS > 140) return false; const nearest = holeWays.length ? holeWays.slice().sort((a, b) => distToLine(t.c, a.line) - distToLine(t.c, b.line))[0] : null; return !nearest || nearest.ref === n || (m(t.c, t0.c) < 60 && distToLine(t.c, line) < 30); })  // a pad near the start but off this hole's line is the next hole's tee (Seth, PCC 8)
     .sort((a, b) => m(b.c, gc) - m(a.c, gc)).slice(0, 6);
   if (!mine.find(t => t.id === t0.id)) mine.unshift(t0);
   const ch = cardHole(n);
