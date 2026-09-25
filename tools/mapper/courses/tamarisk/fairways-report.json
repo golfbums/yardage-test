@@ -72,16 +72,16 @@
   "hole": 6,
   "par": 4,
   "polys": 1,
-  "yds2": 3082,
+  "yds2": 3079,
   "pass": "strict",
   "components_on_line": {
-   "4": 54,
-   "7": 28
+   "5": 59,
+   "8": 28
   },
   "kept": [
-   4
+   5
   ],
-  "samples": 284
+  "samples": 270
  },
  {
   "hole": 7,
