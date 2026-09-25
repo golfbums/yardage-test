@@ -57,6 +57,50 @@
   "samples": 373
  },
  {
+  "hole": 5,
+  "par": 4,
+  "polys": 1,
+  "yds2": 4479,
+  "pass": "strict",
+  "components_on_line": {
+   "7": 166
+  },
+  "kept": [
+   7
+  ],
+  "samples": 219
+ },
+ {
+  "hole": 6,
+  "par": 4,
+  "polys": 1,
+  "yds2": 6266,
+  "pass": "loose",
+  "components_on_line": {
+   "2": 42,
+   "11": 7,
+   "13": 5
+  },
+  "kept": [
+   2
+  ],
+  "samples": 316
+ },
+ {
+  "hole": 7,
+  "par": 5,
+  "polys": 1,
+  "yds2": 5271,
+  "pass": "strict",
+  "components_on_line": {
+   "6": 63
+  },
+  "kept": [
+   6
+  ],
+  "samples": 320
+ },
+ {
   "hole": 8,
   "par": 4,
   "polys": 1,
