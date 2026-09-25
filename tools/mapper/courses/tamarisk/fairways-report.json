@@ -69,35 +69,6 @@
   "samples": 219
  },
  {
-  "hole": 6,
-  "par": 4,
-  "polys": 1,
-  "yds2": 3083,
-  "pass": "strict",
-  "components_on_line": {
-   "5": 51,
-   "8": 30
-  },
-  "kept": [
-   5
-  ],
-  "samples": 294
- },
- {
-  "hole": 7,
-  "par": 5,
-  "polys": 1,
-  "yds2": 5271,
-  "pass": "strict",
-  "components_on_line": {
-   "6": 63
-  },
-  "kept": [
-   6
-  ],
-  "samples": 320
- },
- {
   "hole": 8,
   "par": 4,
   "polys": 1,
