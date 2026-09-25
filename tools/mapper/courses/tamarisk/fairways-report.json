@@ -1,0 +1,79 @@
+[
+ {
+  "hole": 1,
+  "par": 4,
+  "polys": 1,
+  "yds2": 7686,
+  "pass": "strict",
+  "components_on_line": {
+   "4": 172,
+   "6": 8,
+   "7": 3
+  },
+  "kept": [
+   4
+  ],
+  "samples": 258
+ },
+ {
+  "hole": 2,
+  "par": 4,
+  "polys": 1,
+  "yds2": 4179,
+  "pass": "strict",
+  "components_on_line": {
+   "2": 119,
+   "4": 36,
+   "8": 3,
+   "9": 4,
+   "10": 3
+  },
+  "kept": [
+   2
+  ],
+  "samples": 304
+ },
+ {
+  "hole": 3,
+  "par": 3,
+  "fairway": "none (par 3)"
+ },
+ {
+  "hole": 4,
+  "par": 5,
+  "polys": 1,
+  "yds2": 1134,
+  "pass": "strict",
+  "components_on_line": {
+   "4": 88,
+   "6": 8,
+   "7": 20,
+   "8": 3,
+   "9": 7
+  },
+  "kept": [
+   4
+  ],
+  "samples": 373
+ },
+ {
+  "hole": 8,
+  "par": 4,
+  "polys": 1,
+  "yds2": 3901,
+  "pass": "strict",
+  "components_on_line": {
+   "11": 76,
+   "12": 10
+  },
+  "kept": [
+   11
+  ],
+  "samples": 243
+ },
+ {
+  "hole": 9,
+  "par": 3,
+  "fairway": "none (par 3)"
+ }
+]
